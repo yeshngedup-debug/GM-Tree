@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "motion/react";
 import {
   ArrowUpRight,
   Sprout,
@@ -20,8 +18,6 @@ const TreeCanvas = dynamic<TreeCanvasProps>(
 import { Button } from "@/components/ui/button";
 import { ThemeIcon } from "@/components/theme-icon";
 import { themes, themeFor, type Leaf } from "@/lib/catalog";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
   {
@@ -81,130 +77,54 @@ export function HomeExperience() {
           is_demo: index === 0,
         }));
 
-  gsap.from(".hero-kicker", {
-    y: 20,
-    opacity: 0,
-    duration: 0.8,
-    ease: "power2.out",
-  });
-  gsap.from(".hero-title", {
-    y: 30,
-    opacity: 0,
-    duration: 1,
-    ease: "power3.out",
-    delay: 0.2,
-  });
-  gsap.from(".hero-subtitle", {
-    y: 20,
-    opacity: 0,
-    duration: 0.8,
-    ease: "power2.out",
-    delay: 0.4,
-  });
-  gsap.from(".hero-cta", {
-    y: 20,
-    opacity: 0,
-    duration: 0.8,
-    ease: "power2.out",
-    delay: 0.6,
-  });
-
-  gsap.from(".theme-chip", {
-    y: 20,
-    opacity: 0,
-    duration: 0.6,
-    stagger: 0.1,
-    ease: "power2.out",
-    scrollTrigger: {
-      trigger: ".themes-section",
-      start: "top 85%",
-    },
-  });
-
-  gsap.from(".step-card", {
-    y: 30,
-    opacity: 0,
-    duration: 0.6,
-    stagger: 0.15,
-    ease: "power2.out",
-    scrollTrigger: {
-      trigger: ".steps-section",
-      start: "top 85%",
-    },
-  });
-
-  gsap.from(".leaf-preview", {
-    y: 20,
-    opacity: 0,
-    duration: 0.6,
-    stagger: 0.1,
-    ease: "power2.out",
-    scrollTrigger: {
-      trigger: ".recent-section",
-      start: "top 85%",
-    },
-  });
-
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-16 pt-20 md:px-6 md:pt-24">
-      <AnimatePresence>
-        {/* Hero - Cinematic Center */}
-        <motion.section
-          key="hero"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-8 md:space-y-12"
-        >
-          <div className="grid gap-8 bg-card p-0 md:grid-cols-[1fr_1fr] md:p-0 rounded-3xl border border-border shadow-[var(--shadow-card)] overflow-hidden">
-            <div className="flex flex-col justify-between px-6 py-12 md:px-10 md:py-16">
-              <div>
-                <p className="hero-kicker inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-[10px] text-foreground tracking-wider uppercase">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  A shared future. One hope at a time.
-                </p>
-                <h1 className="hero-title mt-4 max-w-6xl tracking-tight text-4xl md:text-6xl font-light leading-tight">
-                  A city grows.<br />
-                  So do our hopes.
-                </h1>
-                <p className="hero-subtitle mt-6 max-w-2xl text-sm leading-6 text-foreground/70 md:text-base md:leading-7">
-                  What future do you imagine for Gelephu Mindfulness City? Add
-                  one voice to a living tree of possibility.
-                </p>
-                <div className="hero-cta mt-10 flex flex-wrap items-center gap-3">
-                  <Button asChild size="lg">
-                    <Link href="/join">
-                      Grow your leaf <ArrowUpRight size={17} />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-              <div className="min-h-[400px] md:min-h-[520px]">
-                <TreeCanvas
-                  leaves={leaves}
-                  illustrative={!leaves.length}
-                  settings={tree?.settings}
-                  contributionCount={tree?.total || 0}
-                  className="home-tree-canvas"
-                  showControls={false}
-                  environment="garden"
-                />
-              </div>
-            </div>
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 md:px-6 md:pt-16">
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="home-hero-grid relative overflow-hidden rounded-[2rem] border border-border bg-card shadow-[var(--shadow-frame)]"
+      >
+        <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-10 md:px-14 md:py-16 lg:py-20">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+          >
+            <span className="home-pulse h-1.5 w-1.5 rounded-full bg-primary" />
+            A shared future, one hope at a time
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-6 max-w-xl text-5xl font-medium leading-[0.96] tracking-[-0.055em] sm:text-6xl lg:text-7xl"
+          >
+            A city grows.<br /><span className="hero-highlight">So do our hopes.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34, duration: 0.55 }}
+            className="mt-7 max-w-md text-base leading-7 text-muted-foreground"
+          >
+            What future do you imagine for Gelephu Mindfulness City? Add one voice to a living tree of possibility.
+          </motion.p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44, duration: 0.5 }} className="mt-9 flex flex-wrap items-center gap-4">
+            <Button asChild size="lg"><Link href="/join">Grow your leaf <ArrowUpRight size={17} /></Link></Button>
+            <Link href="/display" className="group inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-primary">See the live tree <ArrowUpRight className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" size={15} /></Link>
+          </motion.div>
+          <div className="mt-12 flex items-center gap-4 border-t border-border/80 pt-5 text-xs text-muted-foreground">
+            <span className="text-2xl font-medium tracking-[-0.06em] text-foreground">{total.toLocaleString()}</span>
+            <span className="max-w-24 leading-4">hopes taking root</span>
           </div>
-        </motion.section>
+        </div>
+        <div className="home-tree-panel relative min-h-[360px] overflow-hidden border-t border-border bg-muted/60 md:min-h-full md:border-t-0 md:border-l">
+          <div className="home-tree-glow" />
+          <TreeCanvas leaves={leaves} illustrative={!leaves.length} settings={tree?.settings} contributionCount={total} className="home-tree-canvas relative z-10" showControls={false} environment="garden" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-muted/70 to-transparent" />
+          <p className="absolute bottom-5 left-6 z-30 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">A living canopy</p>
+        </div>
+      </motion.section>
 
         {/* Themes */}
-        <motion.section
-          key="themes"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="space-y-4"
-        >
-          <p className="text-[10px] font-semibold text-foreground tracking-wider uppercase">Six ways in</p>
+        <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.35 }} transition={{ duration: 0.5 }} className="mt-14 border-y border-border py-6">
+          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">Six ways in</p>
           <div
             className="themes-section flex flex-wrap items-center gap-x-6 gap-y-2 md:gap-x-8"
           >
@@ -212,7 +132,7 @@ export function HomeExperience() {
               <Link
                 key={theme.id}
                 href={`/join?theme=${theme.id}`}
-                className="theme-chip group inline-flex items-center gap-2 text-sm tracking-tight text-foreground/70 hover:text-foreground transition-colors md:text-base"
+                className="theme-chip group inline-flex items-center gap-2 text-sm tracking-tight text-muted-foreground transition-colors hover:text-foreground md:text-base"
               >
                 <motion.span whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: theme.color }} />
@@ -224,55 +144,38 @@ export function HomeExperience() {
         </motion.section>
 
         {/* How it works - Bento grid */}
-        <motion.section
-          key="steps"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="steps-section space-y-0"
-        >
-          <div className="grid grid-flow-dense grid-cols-1 md:grid-cols-4 gap-4">
+        <section className="steps-section mt-16">
+          <div className="mb-6 flex items-end justify-between gap-4"><div><p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">How it works</p><h2 className="mt-2 text-2xl font-medium tracking-[-0.04em]">A quiet ritual of belonging.</h2></div><span className="hidden text-sm text-muted-foreground md:block">Three simple moments</span></div>
+          <div className="grid grid-flow-dense grid-cols-1 gap-4 md:grid-cols-3">
             {steps.map(({ number, title, body, Icon }, idx) => (
               <motion.div
                 key={number}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * idx }}
-                className="step-card flex flex-col gap-3 rounded-xl border border-border bg-card p-6 group hover:border-primary/50 transition-colors"
+                initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.5, delay: 0.1 * idx }}
+                className="step-card group flex min-h-60 flex-col gap-3 rounded-2xl border border-border bg-card p-6 transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-sm font-semibold">{title}</h3>
-                  <span className="text-[10px] text-foreground">{number}</span>
+                  <span className="text-[10px] text-muted-foreground">{number}</span>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-foreground/70">{body}</p>
-                <span className="mt-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card group-hover:border-primary/50 transition-colors">
+                <span className="mt-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted transition-colors group-hover:border-primary/50 group-hover:bg-primary/10">
                   <Icon size={16} strokeWidth={1.8} />
                 </span>
               </motion.div>
             ))}
           </div>
-        </motion.section>
+        </section>
 
         {/* Recent hopes */}
-        <motion.section
-          key="recent"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="recent-section space-y-4"
-        >
-          <div className="grid gap-4">
-            <p className="text-[10px] font-semibold text-foreground tracking-wider uppercase">Recent hopes</p>
-            <ul className="space-y-3">
+        <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.5 }} className="recent-section mt-16 rounded-2xl border border-border bg-muted/45 p-6 md:p-8">
+          <div className="grid gap-5 md:grid-cols-[0.65fr_1.35fr] md:gap-12"><div><p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">Recent hopes</p><h2 className="mt-3 max-w-xs text-2xl font-medium leading-tight tracking-[-0.04em]">Small thoughts. Shared direction.</h2><Link href="/voices" className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary">Hear more voices <ArrowUpRight size={15} /></Link></div>
+            <ul className="grid gap-3 sm:grid-cols-3">
               {sample.map((leaf) => (
                 <LeafPreview key={leaf.id} leaf={leaf} />
               ))}
             </ul>
           </div>
         </motion.section>
-      </AnimatePresence>
     </div>
   );
 }

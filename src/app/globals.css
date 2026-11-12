@@ -176,6 +176,48 @@ select:focus-visible {
     transparent 94%
   );
 }
+.home-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.home-tree-panel {
+  isolation: isolate;
+}
+.home-tree-panel::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background-image: radial-gradient(hsl(145 38% 35% / 0.12) 0.7px, transparent 0.7px);
+  background-size: 13px 13px;
+  mask-image: linear-gradient(to bottom, transparent, black 28%, transparent 85%);
+}
+.home-tree-glow {
+  position: absolute;
+  z-index: 0;
+  width: 72%;
+  aspect-ratio: 1;
+  top: 8%;
+  left: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(145 85% 55% / 0.2), transparent 66%);
+  animation: canopy-glow 7s ease-in-out infinite alternate;
+}
+.home-pulse {
+  box-shadow: 0 0 0 0 hsl(145 85% 45% / 0.45);
+  animation: status-pulse 2.4s ease-out infinite;
+}
+@keyframes canopy-glow {
+  to { transform: scale(1.08) translateY(-2%); opacity: 0.72; }
+}
+@keyframes status-pulse {
+  70% { box-shadow: 0 0 0 6px hsl(145 85% 45% / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(145 85% 45% / 0); }
+}
+@media (min-width: 768px) {
+  .home-hero-grid { grid-template-columns: minmax(0, 0.98fr) minmax(380px, 1.02fr); }
+}
 summary.no-marker {
   list-style: none;
 }

@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <>
       <SiteHeader pathname="/" />
-      <main>
+      <main id="main-content">
         <HomeExperience />
       </main>
       <SiteFooter />

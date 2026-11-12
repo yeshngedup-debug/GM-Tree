@@ -7,9 +7,9 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     <Link
       href="/"
       aria-label="GM Tree home"
-      className="inline-flex items-center gap-2.5"
+      className="group inline-flex items-center gap-2.5"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-sm transition-transform duration-300 group-hover:rotate-[-7deg] group-hover:scale-105">
         <Sprout size={19} strokeWidth={2} />
       </span>
       <span className="min-w-0">
@@ -34,7 +34,7 @@ const navLinks = [
 
 export function SiteHeader({ pathname = "/" }: { pathname?: string }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/82 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 md:px-6">
         <Brand />
         <nav
