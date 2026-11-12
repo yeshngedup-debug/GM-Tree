@@ -31,7 +31,7 @@
   --radius: 1rem;
   --letter-spacing: -0.015em;
   --font-body:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
   --shadow-card: 0 10px 40px hsl(220 45% 10% / 0.06);
   --shadow-frame:

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { HydrationCompatibility } from "@/components/hydration-compat";
 import { generateCsrfToken } from "@/server/http";
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-geist",
   display: "swap",
   adjustFontFallback: true,
 });
@@ -33,7 +33,7 @@ export default async function RootLayout({
 }) {
   const token = await csrfToken();
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={geist.variable}>
       <head>
         <HydrationCompatibility />
         {token && (
