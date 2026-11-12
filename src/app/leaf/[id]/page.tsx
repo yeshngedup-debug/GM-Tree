@@ -14,7 +14,7 @@ export default async function LeafPage({
   if (!leaf) notFound();
   return (
     <>
-      <SiteHeader />
+      <SiteHeader pathname="/" />
       <main className="mx-auto max-w-xl px-5 py-12">
         <LeafResult leaf={leaf} keepsake />
       </main>

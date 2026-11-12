@@ -6,8 +6,10 @@ import {
   noStore,
   AppError,
   requireSameOrigin,
+  verifyCsrfToken,
   readJson,
 } from "@/server/http";
+import { visitor } from "@/server/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -36,6 +38,8 @@ export async function GET(request: Request) {
 export async function DELETE(request: Request) {
   try {
     requireSameOrigin(request);
+    const session = visitor(request);
+    verifyCsrfToken(request, session.id);
     requireAdmin(request);
     const data = z
       .object({ id: z.string().uuid() })

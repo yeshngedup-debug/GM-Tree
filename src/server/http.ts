@@ -1,8 +1,12 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { sessionSecret } from "./db";
+
 export class AppError extends Error {
   constructor(
     message: string,
     public status = 400,
     public code = "INVALID_REQUEST",
+    public headers?: Record<string, string>,
   ) {
     super(message);
   }
@@ -49,11 +53,32 @@ export function requireSameOrigin(request: Request) {
   if (origin && origin !== expected.origin)
     throw new AppError("Please submit from this site's form.", 403);
 }
+
+export function generateCsrfToken(sessionId: string) {
+  return createHmac("sha256", sessionSecret)
+    .update(`csrf:${sessionId}`)
+    .digest("hex");
+}
+
+export function verifyCsrfToken(request: Request, sessionId: string) {
+  const token = request.headers.get("x-csrf-token");
+  const expected = generateCsrfToken(sessionId);
+  if (!token || token.length !== expected.length)
+    throw new AppError("Missing or invalid CSRF token.", 403, "CSRF_REQUIRED");
+  if (!timingSafeEqual(Buffer.from(token), Buffer.from(expected)))
+    throw new AppError("Missing or invalid CSRF token.", 403, "CSRF_REQUIRED");
+}
+
+export function ipFromRequest(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return "unknown";
+}
 export function errorResponse(error: unknown) {
   if (error instanceof AppError)
     return Response.json(
       { error: error.message, code: error.code },
-      { status: error.status },
+      { status: error.status, headers: error.headers },
     );
   console.error(
     "Request failed:",

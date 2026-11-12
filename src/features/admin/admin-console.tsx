@@ -34,13 +34,19 @@ import { api } from "@/lib/client";
 import { Card } from "@/components/ui/card";
 import { TreeSettingsPanel } from "./tree-settings-panel";
 import { SubmissionManager } from "./submission-manager";
+
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta?.getAttribute("content") || null;
+}
 type Dashboard = {
   leaves: (Leaf & { status: "approved" | "hidden" })[];
   stats: TreeStats;
   ai: string;
   model: string;
-  metrics: Record<string, number>;
-  audit: { action: string; leaf_id: string | null; created_at: string }[];
+  metrics?: Record<string, number>;
+  audit?: { action: string; leaf_id: string | null; created_at: string }[];
 };
 export function AdminConsole() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,6 +143,9 @@ export function AdminConsole() {
       await api("/api/admin/session", {
         method: "POST",
         body: JSON.stringify({ password }),
+        headers: {
+          ...(getCsrfToken() ? { "X-CSRF-Token": getCsrfToken()!} : {}),
+        },
       });
       setAuthenticated(true);
       setPassword("");
@@ -152,7 +161,13 @@ export function AdminConsole() {
     setError("");
     setNotice("");
     try {
-      await api("/api/admin", { method: "POST", body: JSON.stringify(body) });
+      await api("/api/admin", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+          ...(getCsrfToken() ? { "X-CSRF-Token": getCsrfToken()!} : {}),
+        },
+      });
       await load();
       setNotice(
         label === "seed"
@@ -170,7 +185,12 @@ export function AdminConsole() {
   }
   async function logout() {
     try {
-      await api("/api/admin/session", { method: "DELETE" });
+      await api("/api/admin/session", {
+        method: "DELETE",
+        headers: {
+          ...(getCsrfToken() ? { "X-CSRF-Token": getCsrfToken()!} : {}),
+        },
+      });
       setMenuOpen(false);
       setAuthenticated(false);
       setData(null);
@@ -190,17 +210,20 @@ export function AdminConsole() {
       <main className="staff-login mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-7 px-6 py-12">
         <Brand />
         <div>
-          <p className="eyebrow mb-4 text-foreground/45">
+          <p className="eyebrow mb-4 text-muted-foreground">
             Experience Centre staff
           </p>
           <h1 className="text-4xl">Care for the canopy.</h1>
-          <p className="mt-4 text-sm leading-relaxed text-foreground/60">
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
             Manage the shared tree, review public leaves and prepare your
             demonstration.
           </p>
         </div>
-        <form onSubmit={login} className="space-y-4 rounded-3xl bg-card p-7">
-          <label htmlFor="staff-password" className="block text-xs">
+        <form
+          onSubmit={login}
+          className="space-y-4 rounded-2xl border border-border bg-card p-7 shadow-[var(--shadow-card)]"
+        >
+          <label htmlFor="staff-password" className="block text-xs font-medium">
             Staff password
           </label>
           <input
@@ -210,16 +233,16 @@ export function AdminConsole() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
-            className="w-full rounded-2xl bg-muted p-4"
+            className="w-full rounded-xl border border-input bg-background p-4 text-sm"
           />
           {!configured && (
-            <p className="text-xs leading-relaxed">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               Staff access is not configured. Run <code>npm run setup</code> on
               the host laptop and restart the server.
             </p>
           )}
           {error && (
-            <p role="alert" className="text-xs text-red-800">
+            <p role="alert" className="text-xs text-[hsl(0_72%_32%)]">
               {error}
             </p>
           )}
@@ -236,7 +259,7 @@ export function AdminConsole() {
             Sign in
           </Button>
         </form>
-        <p className="text-[10px] leading-relaxed text-foreground/50">
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
           The host laptop's .env.local file contains your staff password. Your
           session expires after eight hours.
         </p>
@@ -283,8 +306,10 @@ export function AdminConsole() {
             <PanelLeftClose size={18} />
           </button>
         </div>
-        <p className="eyebrow mb-3 mt-12 px-3 text-foreground/35">Workspace</p>
-        <nav aria-label="Staff sections" className="space-y-2">
+        <p className="eyebrow mb-2.5 mt-9 px-3 text-muted-foreground">
+          Workspace
+        </p>
+        <nav aria-label="Staff sections" className="space-y-0.5">
           {(
             [
               ["leaves", "Public leaves", Sprout],
@@ -311,8 +336,10 @@ export function AdminConsole() {
             </button>
           ))}
         </nav>
-        <p className="eyebrow mb-3 mt-9 px-3 text-foreground/35">Experience</p>
-        <nav aria-label="Experience links" className="space-y-2">
+        <p className="eyebrow mb-2.5 mt-7 px-3 text-muted-foreground">
+          Experience
+        </p>
+        <nav aria-label="Experience links" className="space-y-0.5">
           <Link href="/tree" className="admin-nav-item">
             <SlidersHorizontal size={18} strokeWidth={1.5} />
             Tree Studio
@@ -324,18 +351,18 @@ export function AdminConsole() {
           </Link>
         </nav>
         <div className="admin-sidebar-bottom">
-          <div className="rounded-3xl bg-primary p-5 text-primary-foreground">
-            <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-accent">
+          <div className="rounded-2xl bg-foreground p-5 text-background">
+            <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-primary">
               <Monitor size={18} />
             </span>
-            <h2 className="text-lg">Room to grow.</h2>
-            <p className="mb-5 mt-2 text-xs leading-5 text-white/50">
+            <h2 className="text-lg text-background">Room to grow.</h2>
+            <p className="mb-5 mt-2 text-xs leading-5 text-background/60">
               Bring the collective canopy to your reception screen.
             </p>
             <Link
               href="/display"
               target="_blank"
-              className="flex min-h-10 items-center justify-between rounded-full bg-accent px-4 text-xs font-medium text-primary"
+              className="flex min-h-10 items-center justify-between rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
               Open display
               <ArrowUpRight size={14} />
@@ -345,7 +372,7 @@ export function AdminConsole() {
             <LogOut size={17} />
             Sign out
           </button>
-          <p className="px-3 pt-3 text-[9px] text-foreground/35">
+          <p className="px-3 pt-3 text-[9px] text-muted-foreground">
             Gelephu experience centre · Staff workspace
           </p>
         </div>
@@ -362,8 +389,8 @@ export function AdminConsole() {
             >
               <Menu size={20} />
             </button>
-            <span className="text-xs text-foreground/45">
-              Workspace <span className="mx-3 text-foreground/25">/</span>
+            <span className="text-xs text-muted-foreground">
+              Workspace <span className="mx-3 text-border">/</span>
               <span className="font-medium text-foreground">
                 {tab === "tree"
                   ? "Tree & display"
@@ -374,28 +401,28 @@ export function AdminConsole() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full bg-card px-3 py-2 text-[10px] sm:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#7b914d]" />
+            <span className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground sm:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Local workspace
             </span>
             <span
               aria-label="Signed in as staff"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-accent"
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"
             >
-              <ShieldCheck size={18} />
+              <ShieldCheck size={17} />
             </span>
           </div>
         </header>
         <main className="admin-content">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow mb-3 text-foreground/40">
+              <p className="eyebrow mb-3 text-muted-foreground">
                 GM Tree · Staff console
               </p>
               <h1 className="text-3xl tracking-tight lg:text-4xl">
                 A little care helps it grow.
               </h1>
-              <p className="mt-3 text-sm text-foreground/50">
+              <p className="mt-3 text-sm text-muted-foreground">
                 A space for every voice, and a view of everything taking root.
               </p>
             </div>
@@ -411,7 +438,7 @@ export function AdminConsole() {
           {error && (
             <p
               role="alert"
-              className="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-800"
+              className="mb-5 rounded-xl border border-[hsl(0_72%_88%)] bg-[hsl(0_72%_97%)] p-4 text-sm text-[hsl(0_72%_32%)]"
             >
               {error}
             </p>
@@ -419,7 +446,7 @@ export function AdminConsole() {
           {notice && (
             <p
               role="status"
-              className="mb-5 rounded-lg bg-accent/40 p-4 text-sm"
+              className="mb-5 rounded-xl border border-primary/25 bg-primary/10 p-4 text-sm"
             >
               {notice}
             </p>
@@ -430,7 +457,7 @@ export function AdminConsole() {
             <TreeSettingsPanel leaves={data?.leaves || []} />
           ) : (
             <>
-              <div className="admin-stats mb-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <div className="admin-stats mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
                 {[
                   ["Public hopes", data?.stats.total ?? "-"],
                   ["Added today", data?.stats.today ?? "-"],
@@ -441,14 +468,12 @@ export function AdminConsole() {
                   ],
                 ].map(([label, value]) => (
                   <Card key={label} className="p-5">
-                    <p className="text-[10px] tracking-wider text-foreground/50">
-                      {label}
-                    </p>
-                    <p className="mt-4 text-2xl font-medium tracking-tight lg:text-3xl">
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="mt-3 text-2xl font-medium tracking-tight lg:text-3xl">
                       {value}
                     </p>
                     {label === "Interpretation" && (
-                      <p className="mt-2 text-[10px] text-foreground/50">
+                      <p className="mt-2 text-[10px] text-muted-foreground">
                         {data?.ai === "openai"
                           ? data.model
                           : "Add a provider key to enable OpenAI"}
@@ -458,46 +483,46 @@ export function AdminConsole() {
                 ))}
               </div>
               <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-                <section className="min-w-0 rounded-3xl bg-card p-4 sm:p-5">
+                <section className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
                   <div className="mb-5 flex items-center justify-between gap-3">
                     <h2 className="text-xl">The collective canopy</h2>
-                    <span className="shrink-0 rounded-full bg-muted px-3 py-1.5 text-[10px] text-foreground/50">
+                    <span className="shrink-0 rounded-full border border-border bg-muted px-3 py-1 text-[10px] text-muted-foreground">
                       {visible.length}{" "}
                       {visible.length === 1 ? "leaf" : "leaves"}
                     </span>
                   </div>
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex gap-1 rounded-lg bg-muted p-1">
+                    <div className="flex gap-1 rounded-xl border border-border bg-muted p-1">
                       {["all", "approved", "hidden", "demo"].map((item) => (
                         <button
                           key={item}
                           onClick={() => setFilter(item)}
-                          className={`min-h-10 rounded-md px-3 text-xs capitalize ${filter === item ? "bg-white shadow-sm" : "text-foreground/60"}`}
+                          className={`min-h-9 rounded-lg px-3 text-xs capitalize transition-colors ${filter === item ? "border border-border bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           {item === "approved" ? "Public" : item}
                         </button>
                       ))}
                     </div>
-                    <div className="flex items-center gap-2 rounded-full bg-muted px-4">
-                      <Search size={14} />
+                    <div className="flex items-center gap-2 rounded-xl border border-border bg-muted px-3">
+                      <Search size={14} className="text-muted-foreground" />
                       <input
                         aria-label="Search leaves"
                         placeholder="Find a hope…"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
-                        className="min-h-11 w-40 bg-transparent text-xs outline-none"
+                        className="min-h-10 w-40 bg-transparent text-xs"
                       />
                     </div>
                   </div>
-                  <div className="overflow-hidden rounded-2xl">
+                  <div className="overflow-hidden rounded-xl border border-border">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-muted text-[9px] tracking-wide text-foreground/60">
+                      <thead className="border-b border-border bg-muted text-[10px] text-muted-foreground">
                         <tr>
-                          <th className="p-4 font-normal">The hope</th>
-                          <th className="hidden p-4 font-normal sm:table-cell">
+                          <th className="p-4 font-medium">The hope</th>
+                          <th className="hidden p-4 font-medium sm:table-cell">
                             Status
                           </th>
-                          <th className="p-4 text-right font-normal">Care</th>
+                          <th className="p-4 text-right font-medium">Care</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -507,11 +532,11 @@ export function AdminConsole() {
                               <p className="max-w-lg text-sm leading-relaxed">
                                 {leaf.leaf_message}
                               </p>
-                              <p className="mt-2 text-[9px] text-foreground/55">
+                              <p className="mt-2 text-[10px] text-muted-foreground">
                                 <span
                                   className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full"
                                   style={{
-                                    background: themeFor(leaf.category).color,
+                                    background: "var(--primary)",
                                   }}
                                 />
                                 {themeFor(leaf.category).short} ·{" "}
@@ -532,7 +557,7 @@ export function AdminConsole() {
                             </td>
                             <td className="hidden p-4 sm:table-cell">
                               <span
-                                className={`rounded-full px-2 py-1 text-[9px] ${leaf.status === "approved" ? "bg-accent/50" : "bg-[#eae5dc]"}`}
+                                className={`rounded-full px-2 py-1 text-[10px] font-medium ${leaf.status === "approved" ? "bg-primary/15 text-foreground" : "bg-muted text-muted-foreground"}`}
                               >
                                 {leaf.status === "approved"
                                   ? "Public"
@@ -589,7 +614,7 @@ export function AdminConsole() {
                       </div>
                     )}
                   </div>
-                  <p className="mt-3 text-[10px] text-foreground/45">
+                  <p className="mt-4 text-[10px] text-muted-foreground">
                     Showing up to 500 recent leaves. Hidden leaves disappear
                     from public pages and connected displays.
                   </p>
@@ -597,7 +622,7 @@ export function AdminConsole() {
                 <aside className="space-y-5">
                   <Card className="space-y-4">
                     <h2 className="text-xl">Prepare the demo</h2>
-                    <p className="text-xs leading-relaxed text-foreground/60">
+                    <p className="text-xs leading-relaxed text-muted-foreground">
                       Load a varied canopy for rehearsal. Every sample is
                       visibly labelled.
                     </p>
@@ -672,7 +697,7 @@ export function AdminConsole() {
                             <div
                               className="h-full rounded-full"
                               style={{
-                                background: theme.color,
+                                background: "var(--primary)",
                                 width: `${Math.max(0, ((data?.stats.categories[theme.id] || 0) / Math.max(data?.stats.total || 1, 1)) * 100)}%`,
                               }}
                             />
@@ -685,16 +710,16 @@ export function AdminConsole() {
                     <h2 className="mb-4 text-xl">Service activity</h2>
                     <dl className="space-y-3 text-xs">
                       {[
-                        ["Accepted", data?.metrics.accepted || 0],
-                        ["Rejected", data?.metrics.rejected || 0],
+                        ["Accepted", data?.metrics?.accepted || 0],
+                        ["Rejected", data?.metrics?.rejected || 0],
                         [
                           "OpenAI interpretations",
-                          data?.metrics.ai_success || 0,
+                          data?.metrics?.ai_success || 0,
                         ],
-                        ["Offline fallbacks", data?.metrics.ai_fallback || 0],
+                        ["Offline fallbacks", data?.metrics?.ai_fallback || 0],
                       ].map(([label, count]) => (
                         <div key={label} className="flex justify-between">
-                          <dt className="text-foreground/55">{label}</dt>
+                          <dt className="text-muted-foreground">{label}</dt>
                           <dd>{count}</dd>
                         </div>
                       ))}

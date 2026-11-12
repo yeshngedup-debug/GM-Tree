@@ -3,7 +3,7 @@ import { HomeExperience } from "@/features/home/home-experience";
 export default function Home() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader pathname="/" />
       <main>
         <HomeExperience />
       </main>

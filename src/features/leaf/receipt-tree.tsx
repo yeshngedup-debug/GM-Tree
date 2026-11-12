@@ -2,7 +2,12 @@
 import { useRef, useState } from "react";
 import { Download, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TreeCanvas } from "@/features/display/tree-canvas";
+import dynamic from "next/dynamic";
+import type { TreeCanvasProps } from "@/features/display/tree-canvas";
+const TreeCanvas = dynamic<TreeCanvasProps>(
+  () => import("@/features/display/tree-canvas").then((mod) => mod.TreeCanvas),
+  { ssr: false },
+);
 import type { SceneController } from "@/features/display/tree-scene";
 import { useTree } from "@/hooks/use-tree";
 import { themeFor, type Leaf } from "@/lib/catalog";
@@ -136,7 +141,7 @@ export function ReceiptTree({ leaf }: { leaf: Leaf }) {
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         <div>
           <h2 className="text-lg">A little more life, because of you.</h2>
-          <p className="mt-1 text-[11px] text-foreground/60">
+          <p className="mt-1 text-[11px] text-muted-foreground">
             The tree’s current growth · your leaf #{leaf.id.slice(0, 6)} is
             highlighted.
           </p>
@@ -156,7 +161,7 @@ export function ReceiptTree({ leaf }: { leaf: Leaf }) {
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4">
-        <p className="text-[11px] text-foreground/55">
+        <p className="text-[11px] text-muted-foreground">
           {tree
             ? `${tree.stats.total} shared ${tree.stats.total === 1 ? "hope" : "hopes"}`
             : "Opening the living tree…"}

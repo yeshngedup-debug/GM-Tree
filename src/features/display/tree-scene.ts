@@ -1,4 +1,24 @@
-import * as THREE from "three";
+import {
+  WebGLRenderer,
+  Scene,
+  PerspectiveCamera,
+  HemisphereLight,
+  DirectionalLight,
+  Vector3,
+  Matrix4,
+  MathUtils,
+  Color,
+  Spherical,
+  Mesh,
+  BufferGeometry,
+  Material,
+  MeshToonMaterial,
+  MeshStandardMaterial,
+  SRGBColorSpace,
+  NeutralToneMapping,
+  PCFSoftShadowMap,
+  Object3D,
+} from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { createTreeModel, type GrowthMetrics } from "./tree-model";
 import { treePalettes, type TreeSettings } from "@/lib/tree-settings";
@@ -51,7 +71,7 @@ export function createTreeScene(
     arrivalIds: readonly string[] = [],
     count = 0;
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const renderer = new THREE.WebGLRenderer({
+  const renderer = new WebGLRenderer({
     alpha: true,
     antialias: settings.quality !== "low",
     powerPreference: "high-performance",
@@ -69,17 +89,17 @@ export function createTreeScene(
       (software ||
         innerWidth < 700 ||
         (navigator.hardwareConcurrency || 4) <= 4));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = NeutralToneMapping;
   renderer.toneMappingExposure = 1;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.className = "procedural-canvas";
   renderer.domElement.setAttribute("aria-hidden", "true");
   host.appendChild(renderer.domElement);
-  const scene = new THREE.Scene(),
-    camera = new THREE.PerspectiveCamera(34, 1, 0.05, 160);
+  const scene = new Scene(),
+    camera = new PerspectiveCamera(34, 1, 0.05, 160);
   const controls = new OrbitControls(camera, host);
   controls.enableDamping = !motion.matches;
   controls.dampingFactor = 0.1;
@@ -98,13 +118,13 @@ export function createTreeScene(
     throw error;
   }
   scene.add(model.group);
-  const sky = new THREE.HemisphereLight(
+  const sky = new HemisphereLight(
       "#bfd8ff",
       "#6b5a45",
       settings.skyIntensity,
     ),
-    sun = new THREE.DirectionalLight("#fff3df", settings.sunIntensity * 1.4),
-    rim = new THREE.DirectionalLight("#e7f4df", 0.35);
+    sun = new DirectionalLight("#fff3df", settings.sunIntensity * 1.4),
+    rim = new DirectionalLight("#e7f4df", 0.35);
   sun.castShadow = true;
   sun.shadow.mapSize.set(
     software ? 512 : isLow() ? 1024 : 2048,
@@ -121,8 +141,8 @@ export function createTreeScene(
   let garden = createTreeEnvironment(scene, settings, isLow());
   host.dataset.grassBlades = String(garden.grassCount);
   host.dataset.shadows = "true";
-  const centre = new THREE.Vector3(),
-    corner = new THREE.Vector3();
+  const centre = new Vector3(),
+    corner = new Vector3();
   let fittedDistance = 10;
   function fit() {
     const width = Math.max(1, host.clientWidth),
@@ -161,14 +181,14 @@ export function createTreeScene(
       .clone()
       .expandByScalar(0.15)
       .applyMatrix4(
-        new THREE.Matrix4().makeRotationY(
-          THREE.MathUtils.degToRad(settings.rotation),
+        new Matrix4().makeRotationY(
+          MathUtils.degToRad(settings.rotation),
         ),
       );
     box.min.multiplyScalar(environment === "garden" ? 1.04 : 1.14);
     box.max.multiplyScalar(environment === "garden" ? 1.04 : 1.14);
     box.getCenter(centre);
-    const tanY = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2),
+    const tanY = Math.tan(MathUtils.degToRad(camera.fov) / 2),
       tanX = tanY * camera.aspect;
     let distance = 1;
     for (let i = 0; i < 8; i++) {
@@ -193,7 +213,7 @@ export function createTreeScene(
       camera.position
         .copy(centre)
         .add(
-          new THREE.Vector3(0, 0.08, 1)
+          new Vector3(0, 0.08, 1)
             .normalize()
             .multiplyScalar(fittedDistance),
         );
@@ -215,7 +235,7 @@ export function createTreeScene(
     sun.shadow.camera.left = sun.shadow.camera.bottom = -settings.size * 2;
     sun.shadow.camera.right = sun.shadow.camera.top = settings.size * 2;
     sun.shadow.camera.updateProjectionMatrix();
-    const angle = THREE.MathUtils.degToRad(settings.sunAngle);
+    const angle = MathUtils.degToRad(settings.sunAngle);
     sun.position.set(
       Math.sin(angle) * 7,
       settings.sunHeight * 9,
@@ -224,7 +244,7 @@ export function createTreeScene(
     sun.intensity = settings.sunIntensity * 1.4;
     sun.target.position.set(0, settings.size * 0.3, 0);
     if (environment === "garden")
-      scene.background = new THREE.Color(
+      scene.background = new Color(
         treePalettes[settings.palette].background,
       );
     sky.intensity = settings.skyIntensity;
@@ -318,7 +338,7 @@ export function createTreeScene(
     first = false;
     dirty = true;
   }
-  const projected = new THREE.Vector3();
+  const projected = new Vector3();
   function render(now: number, force = false) {
     if (disposed || (document.hidden && !force)) return;
     const frameRate = software ? 24 : isLow() ? 30 : 60;
@@ -403,17 +423,17 @@ export function createTreeScene(
       await import("three/addons/exporters/GLTFExporter.js");
     render(performance.now(), true);
     const copy = model.group.clone(true),
-      geometries: THREE.BufferGeometry[] = [],
-      materials: THREE.Material[] = [];
-    copy.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
+      geometries: BufferGeometry[] = [],
+      materials: Material[] = [];
+    copy.traverse((object: Object3D) => {
+      if (object instanceof Mesh) {
         object.geometry = object.geometry.clone();
         geometries.push(object.geometry);
         const original = Array.isArray(object.material)
           ? object.material[0]
           : object.material;
-        const source = original as THREE.MeshToonMaterial;
-        object.material = new THREE.MeshStandardMaterial({
+        const source = original as MeshToonMaterial;
+        object.material = new MeshStandardMaterial({
           color: source.color,
           map: source.map,
           side: source.side,
@@ -466,11 +486,11 @@ export function createTreeScene(
     orbit(horizontal, vertical = 0) {
       userView = true;
       lastInteraction = performance.now();
-      const spherical = new THREE.Spherical().setFromVector3(
+      const spherical = new Spherical().setFromVector3(
         camera.position.clone().sub(controls.target),
       );
       spherical.theta += horizontal;
-      spherical.phi = THREE.MathUtils.clamp(
+      spherical.phi = MathUtils.clamp(
         spherical.phi + vertical,
         controls.minPolarAngle,
         controls.maxPolarAngle,

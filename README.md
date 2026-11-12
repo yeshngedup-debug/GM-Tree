@@ -2,7 +2,7 @@
 
 A local hackathon app for the GMC Experience Centre: scan one QR, share an anonymous aspiration, watch a leaf join the reception tree, and discover a related chamber.
 
-**Next.js 16, React 19, TypeScript, Tailwind 4, shadcn-style components with Radix, Three.js, local SQLite, OpenAI Responses and Moderation APIs.** One Node server serves phones, display, staff console and API.
+**Next.js 16, React 19, TypeScript, Tailwind 4, shadcn-style components with Radix, Three.js, local SQLite, an OpenAI-compatible chat provider.** One Node server serves phones, display, staff console and API.
 
 ## Start
 
@@ -64,17 +64,19 @@ The default `growthMode` is `contributions`. At zero approved hopes the tree is 
 
 The live renderer draws individual contribution leaves, capped at 2,400 in low quality and 6,000 in high quality. Above those limits, the canopy is an aggregate visual sample; every accepted record remains in SQLite and total counts still drive growth. Up to 120 recent leaves remain individually selectable. The illustration fallback also starts bare and scales with contributions.
 
-## Enable OpenAI
+## Enable a chat provider
 
-Set `OPENAI_API_KEY` in `.env.local`, leave `AI_MODE=auto`, and restart. `OPENAI_MODEL` defaults to `gpt-6-luna` and can be changed to a model supporting Responses structured output.
+Set `OPENAI_API_KEY` in `.env.local`, leave `AI_MODE=auto`, and restart. Any endpoint implementing `POST {OPENAI_BASE_URL}/chat/completions` works — for example BazaarLink, OpenRouter or OpenAI itself. `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1` when blank, and `OPENAI_MODEL` defaults to `gpt-6-luna`.
 
-Free text passes local checks, `omni-moderation-latest`, structured generation, schema validation and final output moderation before persistence. Keys stay server-side. Generation requests use `store: false`.
+Free text passes local checks, provider moderation when available, structured generation, schema validation and final output moderation before persistence. Keys stay server-side.
 
-The integration follows the official [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) and [Moderation](https://developers.openai.com/api/docs/guides/moderation) documentation.
+Generation asks for a strict `json_schema` response and unwraps it defensively, because providers differ in how firmly they honour that parameter: the reply is parsed, validated against the leaf schema and retried once with a corrective message. `/moderations` is treated as optional — `404`/`405` disables the provider check and the request continues on the local checks plus the model's own `safe`, `moderation_flags` and `confidence` verdict. Any other provider error still fails closed.
+
+The request shapes follow the [Chat Completions](https://developers.openai.com/api/docs/api-reference/chat) and [Moderation](https://developers.openai.com/api/docs/guides/moderation) references.
 
 No key, `AI_MODE=offline`, provider failure, malformed output or timeout activates the **curated offline fallback**. It uses keywords and the chosen theme to select a prewritten safe leaf. It never publishes raw input and labels its mode on the result. Moderation rejections never become fallback approvals. Local patterns are conservative and do not replace semantic moderation; curated output avoids exposing arbitrary visitor text.
 
-Automated tests exercise the OpenAI integration using a local protocol mock. Verify live account/model access using your own key before presenting.
+Automated tests exercise the integration using a local protocol mock. Verify live account/model access using your own key before presenting.
 
 ## Phones and display
 

@@ -7,6 +7,21 @@ import { treeGrowth } from "@/lib/tree-growth";
 import { themeFor, type Leaf } from "@/lib/catalog";
 import type { SceneController, ProjectedLeaf } from "./tree-scene";
 import type { GrowthMetrics } from "./tree-model";
+export type TreeCanvasProps = {
+  leaves?: Leaf[];
+  activeId?: string;
+  arrivalId?: string;
+  arrivalIds?: readonly string[];
+  onSelect?: (leaf: Leaf) => void;
+  illustrative?: boolean;
+  className?: string;
+  settings?: TreeSettings;
+  contributionCount?: number;
+  sceneRef?: React.RefObject<SceneController | null>;
+  showControls?: boolean;
+  environment?: "transparent" | "garden";
+};
+
 export function TreeCanvas({
   leaves = [],
   activeId,
@@ -20,20 +35,7 @@ export function TreeCanvas({
   sceneRef,
   showControls = true,
   environment = "transparent",
-}: {
-  leaves?: Leaf[];
-  activeId?: string;
-  arrivalId?: string;
-  arrivalIds?: readonly string[];
-  onSelect?: (leaf: Leaf) => void;
-  illustrative?: boolean;
-  className?: string;
-  settings?: TreeSettings;
-  contributionCount?: number;
-  sceneRef?: React.RefObject<SceneController | null>;
-  showControls?: boolean;
-  environment?: "transparent" | "garden";
-}) {
+}: TreeCanvasProps) {
   const host = useRef<HTMLDivElement>(null),
     root = useRef<HTMLDivElement>(null),
     controller = useRef<SceneController | null>(null),
@@ -276,3 +278,5 @@ export function TreeCanvas({
     </div>
   );
 }
+
+export default TreeCanvas;

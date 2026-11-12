@@ -49,9 +49,13 @@ const provider = createServer(async (req, res) => {
     );
     return;
   }
-  if (body.text) {
+  const isLeaf = Boolean(body.response_format);
+  if (isLeaf) {
     generations++;
-    lastGeneration = { model: body.model, reasoning: body.reasoning };
+    lastGeneration = {
+      model: body.model,
+      reasoning_effort: body.reasoning_effort,
+    };
   }
   const leaf = {
     safe: mode !== "rejected" && mode !== "rejected_empty",
@@ -78,9 +82,23 @@ const provider = createServer(async (req, res) => {
     confidence: 0.98,
     moderation_flags: mode === "rejected" ? ["not_an_aspiration"] : [],
   };
-  const output = body.text
+  const output = isLeaf
     ? JSON.stringify(leaf)
     : "Among participating visitors, learning is a recurring hope.";
+  if (req.url === "/v1/chat/completions") {
+    res.end(
+      JSON.stringify({
+        choices: [
+          {
+            finish_reason: "stop",
+            index: 0,
+            message: { role: "assistant", content: output },
+          },
+        ],
+      }),
+    );
+    return;
+  }
   res.end(
     JSON.stringify({
       status: "completed",
@@ -117,7 +135,9 @@ const children = [
       stdio: "inherit",
       env: {
         ...process.env,
-        ADMIN_PASSWORD: "test-only-staff-password",
+        ADMIN_PASSWORD:
+          process.env.TEST_ADMIN_PASSWORD ||
+          require("crypto").randomBytes(18).toString("base64url"),
         AI_MODE: config.ai,
         OPENAI_API_KEY: config.key,
         OPENAI_MODEL: "gpt-6-luna",

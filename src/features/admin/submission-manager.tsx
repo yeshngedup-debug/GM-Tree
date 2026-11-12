@@ -101,19 +101,19 @@ export function SubmissionManager() {
     <section>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl">Visitor voices</h2>
-          <p className="mt-2 text-sm text-foreground/60">
+          <h2 className="text-2xl">Visitor voices</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Original messages, public interpretations, and moderation outcomes.
           </p>
         </div>
-        <p className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 text-[10px]">
+        <p className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5 text-[10px] text-muted-foreground">
           <LockKeyhole size={12} />
           Private · staff access only
         </p>
       </div>
       <div className="mb-6 flex flex-wrap gap-3">
-        <label className="flex min-w-0 flex-1 items-center gap-3 rounded-lg bg-card px-4">
-          <Search size={16} />
+        <label className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-border bg-card px-4">
+          <Search size={16} className="text-muted-foreground" />
           <input
             aria-label="Search visitor messages"
             placeholder="Search original words or public leaf text"
@@ -122,7 +122,7 @@ export function SubmissionManager() {
               setQuery(event.target.value);
               setPage(1);
             }}
-            className="min-h-12 w-full min-w-0 bg-transparent text-sm outline-none"
+            className="min-h-12 w-full min-w-0 bg-transparent text-sm"
           />
         </label>
         <select
@@ -140,17 +140,20 @@ export function SubmissionManager() {
         </select>
       </div>
       {error && (
-        <p role="alert" className="mb-4 text-sm text-red-800">
+        <p role="alert" className="mb-4 text-sm text-[hsl(0_72%_32%)]">
           {error}
         </p>
       )}
       <div className="space-y-4">
         {history?.submissions.map((item) => (
-          <article key={item.id} className="rounded-xl bg-card p-5">
+          <article
+            key={item.id}
+            className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+          >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-[10px]">
                 <span
-                  className={`rounded-full px-2 py-1 ${item.outcome === "rejected" ? "bg-amber-100 text-amber-900" : "bg-accent/50"}`}
+                  className={`rounded-full px-2 py-1 font-medium ${item.outcome === "rejected" ? "bg-destructive/10 text-destructive" : "bg-primary/15 text-foreground"}`}
                 >
                   {item.outcome === "rejected"
                     ? "Not published"
@@ -160,14 +163,14 @@ export function SubmissionManager() {
                 </span>
                 <span>{themeFor(item.selected_theme).short}</span>
                 {item.visit_kind && (
-                  <span className="rounded-full bg-muted px-2 py-1">
+                  <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
                     {item.visit_kind === "returning"
                       ? "Returning visit"
                       : "First visit"}
                   </span>
                 )}
               </div>
-              <time className="text-[10px] text-foreground/50">
+              <time className="text-[10px] text-muted-foreground">
                 {new Date(item.created_at).toLocaleString("en-GB", {
                   timeZone: "Asia/Thimphu",
                   day: "numeric",
@@ -179,20 +182,20 @@ export function SubmissionManager() {
             </div>
             <div className="grid gap-5 md:grid-cols-2">
               <div>
-                <p className="eyebrow mb-2 text-[8px] text-foreground/45">
+                <p className="eyebrow mb-2 text-[8px] text-muted-foreground">
                   Visitor's original words
                 </p>
                 <p className="break-words text-sm leading-relaxed">
                   {item.message}
                 </p>
               </div>
-              <div className="rounded-2xl bg-muted p-4">
-                <p className="eyebrow mb-2 text-[8px] text-foreground/45">
+              <div className="rounded-xl border border-border bg-muted/60 p-4">
+                <p className="eyebrow mb-2 text-[8px] text-muted-foreground">
                   {item.outcome === "approved"
                     ? "Approved leaf"
                     : "Moderation outcome"}
                 </p>
-                <p className="text-sm leading-relaxed text-foreground/65">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {item.leaf_message || item.reason || "Not shared publicly."}
                 </p>
               </div>
@@ -218,7 +221,7 @@ export function SubmissionManager() {
                 </Button>
               )}
               {deleting === item.id ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border-destructive/30 bg-destructive/10 p-2">
                   <span className="text-xs">
                     Delete private words and hide its leaf?
                   </span>
@@ -253,7 +256,7 @@ export function SubmissionManager() {
           </article>
         ))}
         {history && !history.submissions.length && (
-          <div className="rounded-xl bg-card p-10 text-center text-sm text-foreground/60">
+          <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground shadow-[var(--shadow-card)]">
             No visitor messages match. New messages appear here after
             submission.
           </div>
@@ -284,7 +287,7 @@ export function SubmissionManager() {
           </Button>
         </div>
       </div>
-      <p className="mt-6 max-w-3xl text-[10px] leading-relaxed text-foreground/50">
+      <p className="mt-6 max-w-3xl text-[10px] leading-relaxed text-muted-foreground">
         Original words are encrypted in the local database. Email addresses,
         phone-like numbers and links are redacted before storage. Earlier
         contributions from before private history was enabled have no

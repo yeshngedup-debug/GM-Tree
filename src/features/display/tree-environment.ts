@@ -1,25 +1,41 @@
-import * as THREE from "three";
+import {
+  Scene,
+  Group,
+  PlaneGeometry,
+  ShadowMaterial,
+  Mesh,
+  CanvasTexture,
+  MeshBasicMaterial,
+  BufferGeometry,
+  Float32BufferAttribute,
+  MathUtils,
+  Color,
+  MeshLambertMaterial,
+  InstancedMesh,
+  Object3D,
+  DoubleSide,
+} from "three";
 import { treePalettes, type TreeSettings } from "@/lib/tree-settings";
 import { seeded, makeLeafTexture } from "./tree-model";
 
 // WebGL adaptation of upstream grass.js: segmented, tapered curved blades,
 // a ragged disc, root-to-tip color, and a travelling wind field.
 export function createTreeEnvironment(
-  scene: THREE.Scene,
+  scene: Scene,
   settings: TreeSettings,
   low: boolean,
 ) {
   const palette = treePalettes[settings.palette],
-    group = new THREE.Group();
+    group = new Group();
   group.name = "Garden ground, shadow and grass";
   scene.add(group);
   const radius = settings.size * 0.62;
-  const groundGeometry = new THREE.PlaneGeometry(160, 160);
-  const groundMaterial = new THREE.ShadowMaterial({
+  const groundGeometry = new PlaneGeometry(160, 160);
+  const groundMaterial = new ShadowMaterial({
     color: palette.shadow,
     opacity: 0.32,
   });
-  const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+  const ground = new Mesh(groundGeometry, groundMaterial);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.025;
   ground.receiveShadow = true;
@@ -34,19 +50,19 @@ export function createTreeEnvironment(
   gradient.addColorStop(1, "rgba(25,40,40,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 128, 128);
-  const contactTexture = new THREE.CanvasTexture(contactCanvas),
-    contactGeometry = new THREE.PlaneGeometry(radius * 1.1, radius * 1.1),
-    contactMaterial = new THREE.MeshBasicMaterial({
+  const contactTexture = new CanvasTexture(contactCanvas),
+    contactGeometry = new PlaneGeometry(radius * 1.1, radius * 1.1),
+    contactMaterial = new MeshBasicMaterial({
       map: contactTexture,
       transparent: true,
       depthWrite: false,
     });
-  const contact = new THREE.Mesh(contactGeometry, contactMaterial);
+  const contact = new Mesh(contactGeometry, contactMaterial);
   contact.rotation.x = -Math.PI / 2;
   contact.position.y = -0.02;
   group.add(contact);
 
-  const bladeGeometry = new THREE.BufferGeometry();
+  const bladeGeometry = new BufferGeometry();
   const vertices: number[] = [],
     normals: number[] = [],
     indices: number[] = [];
@@ -64,24 +80,24 @@ export function createTreeEnvironment(
   }
   bladeGeometry.setAttribute(
     "position",
-    new THREE.Float32BufferAttribute(vertices, 3),
+    new Float32BufferAttribute(vertices, 3),
   );
   bladeGeometry.setAttribute(
     "normal",
-    new THREE.Float32BufferAttribute(normals, 3),
+    new Float32BufferAttribute(normals, 3),
   );
   bladeGeometry.setIndex(indices);
   const uniforms = {
     uGrassTime: { value: 0 },
     uGrassWind: { value: 0 },
     uGrassDirection: {
-      value: THREE.MathUtils.degToRad(settings.windDirection),
+      value: MathUtils.degToRad(settings.windDirection),
     },
-    uGrassRoot: { value: new THREE.Color(palette.grass) },
-    uGrassTip: { value: new THREE.Color(palette.grassTip) },
+    uGrassRoot: { value: new Color(palette.grass) },
+    uGrassTip: { value: new Color(palette.grassTip) },
   };
-  const grassMaterial = new THREE.MeshLambertMaterial({
-    side: THREE.DoubleSide,
+  const grassMaterial = new MeshLambertMaterial({
+    side: DoubleSide,
   });
   grassMaterial.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
@@ -127,17 +143,17 @@ export function createTreeEnvironment(
         "outgoingLight = mix(diffuseColor.rgb * .85, outgoingLight, .45);\n#include <opaque_fragment>",
       );
   };
-  const grass = new THREE.InstancedMesh(
+  const grass = new InstancedMesh(
     bladeGeometry,
     grassMaterial,
     settings.grass ? (low ? 3000 : 14000) : 0,
   );
-  const dummy = new THREE.Object3D();
+  const dummy = new Object3D();
   for (let i = 0; i < grass.count; i++) {
     const angle = seeded(i + 19) * Math.PI * 2,
       r = Math.sqrt(seeded(i + 4)) * radius,
       rim = 1 + Math.sin(angle * 5) * 0.09 + Math.cos(angle * 7) * 0.06,
-      fullness = 1 - THREE.MathUtils.smoothstep(r / (radius * rim), 0.65, 1),
+      fullness = 1 - MathUtils.smoothstep(r / (radius * rim), 0.65, 1),
       height = (0.19 + seeded(i + 8) * 0.19) * Math.max(0.03, fullness);
     dummy.position.set(Math.cos(angle) * r, 0, Math.sin(angle) * r);
     dummy.rotation.set(
@@ -154,14 +170,14 @@ export function createTreeEnvironment(
   group.add(grass);
 
   const petalTexture = makeLeafTexture(settings.leafShape),
-    petalGeometry = new THREE.PlaneGeometry(0.12, 0.12),
-    petalMaterial = new THREE.MeshLambertMaterial({
+    petalGeometry = new PlaneGeometry(0.12, 0.12),
+    petalMaterial = new MeshLambertMaterial({
       map: petalTexture,
       alphaTest: 0.4,
-      side: THREE.DoubleSide,
+      side: DoubleSide,
       color: palette.leaves[1],
     });
-  const petals = new THREE.InstancedMesh(
+  const petals = new InstancedMesh(
     petalGeometry,
     petalMaterial,
     low ? 8 : 18,
@@ -222,7 +238,7 @@ export function createTreeEnvironment(
     grassCount: grass.count,
     configure(next: TreeSettings) {
       settings = next;
-      uniforms.uGrassDirection.value = THREE.MathUtils.degToRad(
+      uniforms.uGrassDirection.value = MathUtils.degToRad(
         next.windDirection,
       );
     },

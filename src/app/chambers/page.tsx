@@ -7,9 +7,9 @@ import { ChamberExplorer } from "@/features/chambers/chamber-explorer";
 export default function ChambersPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader pathname="/chambers" />
       <main className="mx-auto max-w-6xl px-6 py-16 md:px-10">
-        <p className="eyebrow mb-5 text-foreground/45">
+        <p className="eyebrow mb-5 text-muted-foreground">
           Gelephu experience centre
         </p>
         <h1 className="max-w-2xl text-5xl leading-tight tracking-tight md:text-6xl">
@@ -17,7 +17,7 @@ export default function ChambersPage() {
           <br />
           to a new <em>discovery.</em>
         </h1>
-        <p className="mb-14 mt-6 max-w-lg text-sm leading-relaxed text-foreground/65">
+        <p className="mb-14 mt-6 max-w-lg text-sm leading-relaxed text-muted-foreground">
           Four chambers. Four ways to imagine a shared future. Follow the theme
           that speaks to you, and bring your own perspective to the journey.
         </p>
@@ -33,23 +33,23 @@ export default function ChambersPage() {
                 className="scroll-mt-6 rounded-2xl bg-card p-7 md:p-9"
               >
                 <div className="mb-10 flex items-center justify-between">
-                  <span className="serif text-5xl text-foreground/20">
+                  <span className="serif text-5xl text-muted-foreground">
                     0{id}
                   </span>
                   <Compass
                     size={25}
                     strokeWidth={1}
-                    className="text-foreground/50"
+                    className="text-muted-foreground"
                   />
                 </div>
-                <p className="eyebrow mb-3 text-[9px] text-foreground/45">
+                <p className="eyebrow mb-3 text-[9px] text-muted-foreground">
                   {detail.eyebrow}
                 </p>
                 <h2 className="mb-4 text-3xl">{name}</h2>
-                <p className="text-sm leading-relaxed text-foreground/60">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {detail.description}
                 </p>
-                <p className="mt-3 text-xs leading-relaxed text-foreground/55">
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                   {detail.location}
                 </p>
                 <div className="mt-7 flex flex-wrap gap-2">
@@ -69,7 +69,7 @@ export default function ChambersPage() {
             );
           })}
         </div>
-        <p className="mt-6 max-w-2xl text-[10px] leading-relaxed text-foreground/50">
+        <p className="mt-6 max-w-2xl text-[10px] leading-relaxed text-muted-foreground">
           Chamber numbers and exhibit names follow the supplied
           experience-centre blueprint. The connections between your hope and an
           exhibit are suggested pathways.

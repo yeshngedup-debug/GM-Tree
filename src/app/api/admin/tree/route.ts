@@ -1,12 +1,13 @@
 import { requireAdmin } from "@/server/auth";
 import { treeSettingsSchema } from "@/lib/tree-settings";
-import { getTreeSettings, saveTreeSettings } from "@/server/db";
+import { consumeRate, getTreeSettings, saveTreeSettings } from "@/server/db";
 import {
   AppError,
   errorResponse,
   noStore,
   readJson,
   requireSameOrigin,
+  ipFromRequest,
 } from "@/server/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ export async function PUT(request: Request) {
   try {
     requireSameOrigin(request);
     requireAdmin(request);
+    const ip = ipFromRequest(request);
+    await consumeRate(`admin:tree:${ip}`, 30, 60000);
     const result = treeSettingsSchema.safeParse(await readJson(request));
     if (!result.success)
       throw new AppError(
@@ -39,6 +42,8 @@ export async function PATCH(request: Request) {
   try {
     requireSameOrigin(request);
     requireAdmin(request);
+    const ip = ipFromRequest(request);
+    await consumeRate(`admin:tree:${ip}`, 30, 60000);
     const headline = treeSettingsSchema
       .pick({ headline: true })
       .strict()

@@ -1,7 +1,25 @@
-import { revision, snapshot } from "@/server/db";
+import { revision, snapshot, consumeRate } from "@/server/db";
+import { ipFromRequest } from "@/server/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export function GET(request: Request) {
+let activeStreams = 0;
+const MAX_STREAMS = 50;
+export async function GET(request: Request) {
+  const ip = ipFromRequest(request);
+  const rate = await consumeRate(`stream:${ip}`, 30, 60000);
+  if (!rate.allowed) {
+    return new Response(
+      JSON.stringify({ error: "Please slow down.", code: "RATE_LIMITED", retryAfter: rate.retryAfter }),
+      { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(rate.retryAfter) } },
+    );
+  }
+  if (activeStreams >= MAX_STREAMS) {
+    return new Response(
+      JSON.stringify({ error: "Too many open connections.", code: "STREAM_LIMITED" }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  activeStreams++;
   const encoder = new TextEncoder();
   let cleanup = () => {};
   const stream = new ReadableStream({
@@ -13,6 +31,7 @@ export function GET(request: Request) {
       const close = () => {
         if (closed) return;
         closed = true;
+        activeStreams = Math.max(0, activeStreams - 1);
         clearInterval(timer);
         request.signal.removeEventListener("abort", close);
         try {

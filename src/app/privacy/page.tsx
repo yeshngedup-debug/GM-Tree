@@ -2,9 +2,9 @@ import { SiteHeader, SiteFooter } from "@/components/brand";
 export default function PrivacyPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader pathname="/privacy" />
       <main className="mx-auto max-w-2xl px-6 py-16">
-        <p className="eyebrow mb-5 text-foreground/45">
+        <p className="eyebrow mb-5 text-muted-foreground">
           Participation & privacy
         </p>
         <h1 className="mb-8 text-5xl">
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <br />
           Your choice to grow.
         </h1>
-        <div className="space-y-7 text-sm leading-relaxed text-foreground/75">
+        <div className="space-y-7 text-sm leading-relaxed text-muted-foreground">
           <section>
             <h2 className="mb-3 text-2xl text-foreground">
               What becomes public

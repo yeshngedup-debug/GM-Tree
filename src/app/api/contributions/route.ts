@@ -25,6 +25,7 @@ import {
   AppError,
   readJson,
   requireSameOrigin,
+  verifyCsrfToken,
   errorResponse,
   noStore,
 } from "@/server/http";
@@ -45,6 +46,19 @@ async function processLeaf(
   owner: string,
   profile: string | null,
 ) {
+  const aiRate = await consumeRate(
+    "ai:provider",
+    Number(process.env.AI_RATE_LIMIT) || 30,
+    60000,
+  );
+  if (!aiRate.allowed) {
+    throw new AppError(
+      "AI provider busy. Please try again shortly.",
+      429,
+      "AI_RATE_LIMITED",
+      { "Retry-After": String(aiRate.retryAfter) },
+    );
+  }
   const { visitor_reply, ...generated } = await createLeaf(
     input.aspiration,
     input.theme,
@@ -93,6 +107,7 @@ export async function POST(request: Request) {
     });
   try {
     requireSameOrigin(request);
+    verifyCsrfToken(request, session.id);
     const result = contributionSchema.safeParse(await readJson(request));
     if (!result.success)
       throw new AppError(

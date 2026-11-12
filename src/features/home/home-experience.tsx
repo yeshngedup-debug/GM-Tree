@@ -1,172 +1,216 @@
 "use client";
+
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowUpRight,
-  ArrowRight,
   Sprout,
   Sparkles,
   Compass,
 } from "lucide-react";
 import { useTree } from "@/hooks/use-tree";
-import { TreeCanvas } from "@/features/display/tree-canvas";
+import dynamic from "next/dynamic";
+import type { TreeCanvasProps } from "@/features/display/tree-canvas";
+const TreeCanvas = dynamic<TreeCanvasProps>(
+  () => import("@/features/display/tree-canvas").then((mod) => mod.TreeCanvas),
+  { ssr: false },
+);
 import { Button } from "@/components/ui/button";
 import { ThemeIcon } from "@/components/theme-icon";
-import { themes } from "@/lib/catalog";
+import { themes, themeFor, type Leaf } from "@/lib/catalog";
+
+const steps = [
+  {
+    number: "01",
+    title: "Pause and imagine",
+    body: "Choose what matters to you and share one hope for the city's future.",
+    Icon: Sparkles,
+  },
+  {
+    number: "02",
+    title: "Watch it take root",
+    body: "Once staff approve it, your hope becomes a glowing leaf on the tree.",
+    Icon: Sprout,
+  },
+  {
+    number: "03",
+    title: "Follow your curiosity",
+    body: "Every hope suggests a chamber to explore next.",
+    Icon: Compass,
+  },
+];
+
+const faqs = [
+  {
+    question: "Do I need an account to add a hope?",
+    answer:
+      "No. There is no sign-up and we do not ask for your name or contact details.",
+  },
+  {
+    question: "What happens after I submit?",
+    answer:
+      "Your words are reviewed and, once approved, grow as a leaf on the shared tree.",
+  },
+  {
+    question: "Can I keep my hope private?",
+    answer:
+      "Only the approved leaf becomes public. Your original words stay private.",
+  },
+];
+
+function LeafPreview({ leaf }: { leaf: Leaf }) {
+  const theme = themeFor(leaf.category);
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex gap-3 rounded-xl border border-border bg-card p-3"
+    >
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <ThemeIcon theme={theme.id} size={14} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[11px] text-foreground">{theme.short}</span>
+        <span className="mt-0.5 line-clamp-2 block text-xs leading-5">{leaf.leaf_message}</span>
+      </span>
+    </motion.li>
+  );
+}
+
 export function HomeExperience() {
   const { tree } = useTree();
+  const total = tree?.total ?? 0;
+  const leaves = tree?.leaves ?? [];
+  const sample: Leaf[] =
+    leaves.length > 0
+      ? leaves.slice(0, 3)
+      : themes.slice(0, 3).map((theme, index) => ({
+          id: `sample-${theme.id}`,
+          category: theme.id,
+          leaf_message: theme.message,
+          chamber_id: theme.chamber as Leaf["chamber_id"],
+          chamber_reason: "",
+          created_at: new Date(0).toISOString(),
+          mode: "offline",
+          is_demo: index === 0,
+        }));
   return (
-    <>
-      <section className="home-hero mx-auto max-w-[1440px] px-5 pb-5 pt-2 md:px-10">
-        <div className="home-hero-card grid gap-4 rounded-[32px] bg-card p-3 md:grid-cols-[.95fr_1.05fr] md:p-4 lg:p-6">
-          <div className="hero-copy flex flex-col justify-center px-2 py-4 md:px-6 md:py-7 lg:px-8">
-            <p className="hero-kicker mb-5 flex items-center gap-2 text-[11px] text-foreground/65">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent">
-                <Sprout size={13} />
-              </span>
-              A shared future. One hope at a time.
-            </p>
-            <h1 className="text-[clamp(2.2rem,5vw,5.3rem)] leading-[1.05] tracking-[-.065em]">
-              A city grows.
-              <br />
-              So do our <span className="hero-highlight">hopes.</span>
-            </h1>
-            <p className="hero-description mt-5 max-w-sm text-sm leading-6 text-foreground/60 lg:text-base">
-              What future do you imagine for Gelephu Mindfulness City? Add your
-              voice to a living tree of possibility.
-            </p>
-            <div className="hero-actions mt-6 flex flex-wrap items-center gap-4">
-              <Button asChild>
-                <Link href="/join">
-                  Grow your leaf <ArrowUpRight size={18} />
-                </Link>
-              </Button>
-              <span className="hero-note text-[11px] text-foreground/50">
-                No account. Just your imagination.
-              </span>
+    <div className="mx-auto max-w-7xl px-4 pb-6 pt-8 md:px-6 md:pt-12">
+      <AnimatePresence>
+        <motion.section
+          key="hero"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-12 md:space-y-16"
+        >
+          {/* Hero */}
+          <div className="grid gap-4 bg-card p-6 md:grid-cols-[1.05fr_1fr] md:p-8 rounded-3xl border border-border shadow-[var(--shadow-card)]">
+            <div className="flex flex-col justify-between gap-6">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-[10px] text-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  A shared future. One hope at a time.
+                </p>
+                <h1 className="mt-4 tracking-tight text-4xl md:text-6xl font-light">
+                  A city grows.<br />
+                  So do our <span className="text-primary">hopes.</span>
+                </h1>
+                <p className="mt-6 max-w-sm text-sm leading-6 text-foreground md:text-base md:leading-7">
+                  What future do you imagine? Add one voice to a living tree.
+                </p>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Button asChild size="lg">
+                    <Link href="/join">
+                      Grow your leaf <ArrowUpRight size={17} />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="min-h-[300px] md:min-h-[380px]">
+                <TreeCanvas
+                leaves={leaves}
+                illustrative={!leaves.length}
+                settings={tree?.settings}
+                contributionCount={tree?.total || 0}
+                className="home-tree-canvas"
+                showControls={false}
+                environment="garden"
+              />
             </div>
-            <div className="hero-community mt-7 flex items-center gap-4">
-              <div className="flex -space-x-2" aria-hidden="true">
-                {themes.slice(0, 3).map((theme) => (
-                  <span
-                    key={theme.id}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-muted ring-4 ring-card"
+          </div>
+        </div>
+
+          {/* Themes */}
+          <section className="space-y-3">
+            <p className="text-[10px] font-semibold text-foreground tracking-wider uppercase">Six ways in</p>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 md:gap-x-8">
+              {themes.map((theme) => (
+                <Link
+                  key={theme.id}
+                  href={`/join?theme=${theme.id}`}
+                  className="group inline-flex items-center gap-2 text-sm tracking-tight text-foreground/70 hover:text-foreground transition-colors md:text-base"
+                >
+                  <motion.span whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: theme.color }} />
+                    {theme.short}
+                  </motion.span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </motion.section>
+
+        {/* How it works */}
+        <motion.section
+          key="steps"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mt-12 space-y-8"
+        >
+          <div className="grid gap-6 md:grid-cols-12">
+            <div className="md:col-span-5">
+              <p className="text-[10px] font-semibold text-foreground tracking-wider uppercase">How a hope grows</p>
+              <h2 className="mt-2 tracking-tight text-3xl md:text-4xl font-light">From a thought to a canopy.</h2>
+              <div className="mt-6 space-y-4">
+                {steps.map(({ number, title, body, Icon }, idx) => (
+                  <motion.div
+                    key={number}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 * idx }}
+                    className="flex gap-3 rounded-xl p-3 border border-border bg-card hover:bg-muted transition-colors"
                   >
-                    <ThemeIcon theme={theme.id} size={16} />
-                  </span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card">
+                      <Icon size={16} strokeWidth={1.8} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <h3 className="text-sm font-semibold">{title}</h3>
+                        <span className="text-[10px] text-foreground">/{number}</span>
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-foreground">{body}</p>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
-              <p className="text-xs leading-5 text-foreground/55">
-                <strong className="font-semibold text-foreground">
-                  {tree?.total ?? "—"} {tree?.total === 1 ? "hope" : "hopes"}
-                </strong>{" "}
-                taking root. <br />
-                Every voice makes it grow.
-              </p>
+            </div>
+            <div className="md:col-span-7 flex flex-col justify-center gap-2 bg-muted/40 rounded-2xl p-4 md:p-6 border border-border">
+              <p className="text-[10px] font-semibold text-foreground tracking-wider uppercase">Recent hopes</p>
+              <ul className="mt-2 space-y-2">
+                {sample.map((leaf) => (
+                  <LeafPreview key={leaf.id} leaf={leaf} />
+                ))}
+              </ul>
             </div>
           </div>
-          <div className="home-tree">
-            <TreeCanvas
-              leaves={tree?.leaves || []}
-              illustrative={!tree?.leaves.length}
-              settings={tree?.settings}
-              contributionCount={tree?.total || 0}
-              className="home-tree-canvas"
-              showControls={false}
-              environment="garden"
-            />
-          </div>
-        </div>
-      </section>
-      <section className="mx-auto max-w-[1440px] px-5 py-12 md:px-10 md:py-16">
-        <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="eyebrow mb-3 text-foreground/45">
-              A moment for tomorrow
-            </p>
-            <h2 className="text-3xl tracking-tight md:text-4xl">
-              Your hope has a place here.
-            </h2>
-          </div>
-          <Link
-            href="/join"
-            className="flex min-h-11 items-center gap-3 text-xs"
-          >
-            Make it part of the story <ArrowRight size={15} />
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              number: "01",
-              title: "Pause & imagine",
-              body: "Choose what matters to you. Share one hope for the city's future.",
-              Icon: Sparkles,
-            },
-            {
-              number: "02",
-              title: "Watch it take root",
-              body: "Your approved hope becomes a glowing leaf on our shared tree.",
-              Icon: Sprout,
-            },
-            {
-              number: "03",
-              title: "Follow your curiosity",
-              body: "Discover a chamber that connects with your vision of tomorrow.",
-              Icon: Compass,
-            },
-          ].map(({ number, title, body, Icon }) => (
-            <div key={number} className="rounded-3xl bg-card p-7">
-              <div className="mb-9 flex items-center justify-between">
-                <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-full ${number === "01" ? "bg-primary text-accent" : "bg-muted"}`}
-                >
-                  <Icon size={20} strokeWidth={1.5} />
-                </span>
-                <span className="text-[11px] text-foreground/35">
-                  /{number}
-                </span>
-              </div>
-              <h3 className="mb-3 text-xl">{title}</h3>
-              <p className="max-w-xs text-sm leading-6 text-foreground/55">
-                {body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="mx-auto mb-12 max-w-[1440px] px-5 md:px-10">
-        <div className="rounded-[28px] bg-[#e0e3d5] p-6 md:p-9">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="eyebrow mb-3 text-foreground/45">
-                Many branches. One shared future.
-              </p>
-              <h2 className="text-2xl md:text-3xl">What matters to you?</h2>
-            </div>
-            <p className="max-w-xs text-xs leading-5 text-foreground/55">
-              A thriving city starts with the things we care about.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {themes.map((theme) => (
-              <Link
-                href={`/join?theme=${theme.id}`}
-                key={theme.id}
-                className="group flex flex-col justify-between gap-6 rounded-2xl bg-card/80 p-4 transition-colors hover:bg-card"
-              >
-                <div className="flex items-center justify-between">
-                  <ThemeIcon theme={theme.id} size={22} />
-                  <ArrowUpRight
-                    size={14}
-                    className="text-foreground/35 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                  />
-                </div>
-                <span className="text-xs leading-5">{theme.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
+        </motion.section>
+
+      </AnimatePresence>
+    </div>
   );
 }

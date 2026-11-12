@@ -11,10 +11,12 @@ import { requireAdmin } from "@/server/auth";
 import {
   readJson,
   requireSameOrigin,
+  verifyCsrfToken,
   errorResponse,
   AppError,
   noStore,
 } from "@/server/http";
+import { visitor } from "@/server/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
@@ -46,6 +48,8 @@ const actionSchema = z.discriminatedUnion("action", [
 export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
+    const session = visitor(request);
+    verifyCsrfToken(request, session.id);
     requireAdmin(request);
     const result = actionSchema.safeParse(await readJson(request));
     if (!result.success) throw new AppError("Invalid staff action.");

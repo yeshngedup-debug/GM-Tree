@@ -12,6 +12,9 @@ import {
   decryptMessage,
   transaction,
   consumeRate,
+  getPinLockout,
+  recordPinFailure,
+  clearPinFailures,
 } from "./db";
 import { cookie, cookieValue, visitor } from "./auth";
 import { AppError } from "./http";
@@ -101,6 +104,17 @@ export async function unlockVisitorHistory(
 ) {
   const session = visitor(request),
     cidHash = keyed("cid", input.cid);
+  const lockout = await getPinLockout(cidHash);
+  if (lockout && Number(lockout.locked_until) > Date.now()) {
+    const retryAfter = Math.ceil(
+      (Number(lockout.locked_until) - Date.now()) / 1000,
+    );
+    throw new AppError(
+      "Too many failed attempts. Your history is temporarily locked. Please try again later.",
+      423,
+      "PIN_LOCKED",
+    );
+  }
   const perCid = await consumeRate(`history:cid:${cidHash}`, 6, 15 * 60 * 1000);
   const perBrowser = await consumeRate(
     `history:browser:${visitorOwner(session.id)}`,
@@ -138,18 +152,22 @@ export async function unlockVisitorHistory(
   if (
     profile &&
     !timingSafeEqual(hashed, Buffer.from(String(profile.pin_hash), "hex"))
-  )
+  ) {
+    await recordPinFailure(cidHash);
     throw new AppError(
       "We couldn't unlock that history. Check your CID and private PIN.",
       401,
       "HISTORY_LOCKED",
     );
-  if (!profile && input.action === "signin")
+  }
+  if (!profile && input.action === "signin") {
+    await recordPinFailure(cidHash);
     throw new AppError(
       "We couldn't unlock that history. Check your CID and private PIN.",
       401,
       "HISTORY_LOCKED",
     );
+  }
   const token = randomBytes(32).toString("base64url");
   await transaction(async (client) => {
     if (!profile) {
@@ -179,6 +197,7 @@ export async function unlockVisitorHistory(
       [digest(token), String(profile!.id), Date.now() + duration * 1000],
     );
   });
+  await clearPinFailures(cidHash);
   return {
     profile: String(profile!.id),
     cookies: [

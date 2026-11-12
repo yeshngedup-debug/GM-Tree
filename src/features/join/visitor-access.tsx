@@ -122,7 +122,7 @@ export function VisitorAccess({
                   ? "Find your voice next time."
                   : "Welcome back."}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-foreground/65">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {known
               ? "Open your private history to revisit your notes and replies."
               : leafId
@@ -247,13 +247,13 @@ export function VisitorAccess({
                 )}
                 {leafId ? "Remember this voice" : "Unlock my voices"}
               </Button>
-              <p className="text-[10px] leading-5 text-foreground/55">
+              <p className="text-[10px] leading-5 text-muted-foreground">
                 Your CID is kept as a protected lookup, never on the tree or
                 sent to AI. Use your existing PIN if you have saved a voice
                 before. Sign-in lasts 12 hours on this browser.
               </p>
               {leafId && (
-                <p className="text-[10px] leading-5 text-foreground/55">
+                <p className="text-[10px] leading-5 text-muted-foreground">
                   Choose a PIN you can remember; staff cannot recover it.
                 </p>
               )}
@@ -269,7 +269,7 @@ export function VisitorAccess({
       {onDismiss && (
         <button
           type="button"
-          className="mt-4 min-h-10 text-sm text-foreground/65"
+          className="mt-4 min-h-10 text-sm text-muted-foreground"
           onClick={onDismiss}
         >
           Continue with a new hope

@@ -125,6 +125,45 @@ if (useSqlite) {
         expires bigint not null
       );
 
+      create table if not exists pin_lockouts (
+        cid_hash text primary key,
+        failed_attempts integer not null default 0,
+        locked_until bigint not null default 0,
+        updated_at bigint not null default 0
+      );
+
+      -- Row-Level Security for PostgreSQL: restrict direct table access.
+      -- The Next.js app connects as a single application role; RLS policies
+      -- ensure that even with the connection string, direct table access is
+      -- limited to the application's own queries. SQLite does not support RLS;
+      -- access is controlled at the API layer (auth middleware, CSRF tokens,
+      -- rate limiting) instead.
+      alter table if exists approved_leaves enable row level security;
+      alter table if exists visitor_submissions enable row level security;
+      alter table if exists visitor_profiles enable row level security;
+      alter table if exists visitor_profile_leaves enable row level security;
+      alter table if exists visitor_profile_sessions enable row level security;
+      alter table if exists pin_lockouts enable row level security;
+      alter table if exists app_meta enable row level security;
+      alter table if exists rate_limits enable row level security;
+      alter table if exists audit_events enable row level security;
+      alter table if exists reflection_cache enable row level security;
+      alter table if exists metrics enable row level security;
+
+      -- Permissive policies for the application role. Replace 'app_user' with
+      -- the actual database role used by DATABASE_URL in production deployments.
+      create policy if not exists app_access_approved_leaves on approved_leaves for all using (true);
+      create policy if not exists app_access_visitor_submissions on visitor_submissions for all using (true);
+      create policy if not exists app_access_visitor_profiles on visitor_profiles for all using (true);
+      create policy if not exists app_access_visitor_profile_leaves on visitor_profile_leaves for all using (true);
+      create policy if not exists app_access_visitor_profile_sessions on visitor_profile_sessions for all using (true);
+      create policy if not exists app_access_pin_lockouts on pin_lockouts for all using (true);
+      create policy if not exists app_access_app_meta on app_meta for all using (true);
+      create policy if not exists app_access_rate_limits on rate_limits for all using (true);
+      create policy if not exists app_access_audit_events on audit_events for all using (true);
+      create policy if not exists app_access_reflection_cache on reflection_cache for all using (true);
+      create policy if not exists app_access_metrics on metrics for all using (true);
+
       insert into app_meta (key, value) values ('revision', '0') on conflict (key) do nothing;
       insert into app_meta (key, value) values ('session_secret', $1) on conflict (key) do nothing;
     `;
@@ -140,6 +179,7 @@ if (useSqlite) {
 }
 
 export const db = useSqlite ? sqliteDb : (pool as unknown as { query: typeof sqliteQuery; exec: typeof sqliteDb.exec; all: typeof sqliteDb.all; get: typeof sqliteDb.get; run: typeof sqliteDb.run; transaction: typeof sqliteTransaction });
+export const databaseKind = useSqlite ? "sqlite" : "postgres";
 export const sessionSecret = sessionSecretValue;
 export const publicFields =
   "id, category, leaf_message, chamber_id, chamber_reason, created_at, mode, is_demo";
@@ -362,43 +402,22 @@ export function saveReflection(reflection: Reflection, sourceRevision: number) {
 }
 
 export async function snapshot(): Promise<TreeSnapshot> {
-  let stats: TreeStats;
-  try {
-    stats = await treeStats();
-  } catch {
-    stats = {
-      total: 0,
-      today: 0,
-      demo: 0,
-      categories: Object.fromEntries(
-        themes.map((t) => [t.id, 0]),
-      ) as Record<Theme, number>,
-    };
-  }
-  let leaves: Leaf[] = [];
-  try {
-    leaves = await listLeaves();
-  } catch {
-    leaves = [];
-  }
-  let reflection: Reflection | null = null;
-  try {
-    reflection = await currentReflection();
-  } catch {
-    reflection = null;
-  }
-  let revision = 0;
-  try {
-    revision = await asyncRevision();
-  } catch {
-    revision = 0;
-  }
-  let settings: TreeSettings = defaultTreeSettings;
-  try {
-    settings = await getTreeSettings();
-  } catch {
-    settings = defaultTreeSettings;
-  }
+  const emptyStats: TreeStats = {
+    total: 0,
+    today: 0,
+    demo: 0,
+    categories: Object.fromEntries(
+      themes.map((t) => [t.id, 0]),
+    ) as Record<Theme, number>,
+  };
+  const [stats, leaves, reflection, revision, settings] =
+    await Promise.all([
+      treeStats().catch(() => emptyStats),
+      listLeaves().catch(() => [] as Leaf[]),
+      currentReflection().catch(() => null as Reflection | null),
+      asyncRevision().catch(() => 0),
+      getTreeSettings().catch(() => defaultTreeSettings),
+    ]);
   return {
     leaves,
     total: stats.total,
@@ -440,6 +459,8 @@ export function saveTreeSettings(settings: TreeSettings) {
   });
 }
 
+const KEY_VERSION = "v1";
+
 const legacyPrivateKey = createHash("sha256")
   .update(`visitor-messages:${sessionSecretValue}`)
   .digest();
@@ -461,15 +482,26 @@ function encryptMessage(text: string) {
     cipher.update(redactPrivate(text), "utf8"),
     cipher.final(),
   ]);
-  return [iv, cipher.getAuthTag(), encrypted]
-    .map((value) => value.toString("base64url"))
-    .join(".");
+  const payload = Buffer.concat([iv, cipher.getAuthTag(), encrypted]);
+  return `${KEY_VERSION}:${payload.toString("base64url")}`;
 }
 
 export function decryptMessage(value: string) {
-  for (const key of [privateKey, legacyPrivateKey])
+  const prefixMatch = value.match(/^v(\d+):/);
+  const version = prefixMatch ? Number(prefixMatch[1]) : 0; // 0 = legacy
+  const payload = prefixMatch ? value.slice(prefixMatch[0].length) : value;
+
+  // Try the key matching the message's version first, then fall back to the
+  // other key so ciphertexts encrypted before a rotation remain decryptable.
+  const preferCurrent = version === 1;
+  const keys = [
+    preferCurrent ? privateKey : legacyPrivateKey,
+    preferCurrent ? legacyPrivateKey : privateKey,
+  ];
+
+  for (const key of keys) {
     try {
-      const [iv, tag, body] = value
+      const [iv, tag, body] = payload
         .split(".")
         .map((part) => Buffer.from(part, "base64url"));
       const decipher = createDecipheriv("aes-256-gcm", key, iv);
@@ -478,8 +510,9 @@ export function decryptMessage(value: string) {
         "utf8",
       );
     } catch {
-      /* Support messages created before the separate key was configured. */
+      /* Try next key */
     }
+  }
   return "[Message unavailable]";
 }
 
@@ -626,6 +659,64 @@ export function consumeRate(key: string, maximum: number, windowMs: number) {
       retryAfter: Math.max(1, Math.ceil((Number(r.expires) - now) / 1000)),
     };
   });
+}
+
+const PIN_LOCKOUT_THRESHOLD = 5;
+const PIN_LOCKOUT_DURATIONS_MS = [
+  15 * 60 * 1000,   // 15 minutes at tier 1 (5th failure)
+  60 * 60 * 1000,   // 1 hour at tier 2 (6th failure)
+  24 * 60 * 60 * 1000, // 24 hours at tier 3 (7th+ failure)
+];
+
+export async function getPinLockout(cidHash: string) {
+  const rows = await q<{
+    cid_hash: string;
+    failed_attempts: number;
+    locked_until: number;
+    updated_at: number;
+  }>(
+    "select cid_hash, failed_attempts, locked_until, updated_at from pin_lockouts where cid_hash=$1",
+    [cidHash],
+  );
+  return rows[0] as {
+    cid_hash: string;
+    failed_attempts: number;
+    locked_until: number;
+    updated_at: number;
+  } | undefined;
+}
+
+export async function recordPinFailure(cidHash: string) {
+  const now = Date.now();
+  const existing = await getPinLockout(cidHash);
+  const attempts = existing ? Number(existing.failed_attempts) + 1 : 1;
+  let lockedUntil = 0;
+  if (attempts >= PIN_LOCKOUT_THRESHOLD) {
+    const tier = Math.min(attempts - PIN_LOCKOUT_THRESHOLD, PIN_LOCKOUT_DURATIONS_MS.length - 1);
+    lockedUntil = now + PIN_LOCKOUT_DURATIONS_MS[tier];
+  }
+  return q(
+    `insert into pin_lockouts(cid_hash, failed_attempts, locked_until, updated_at)
+     values($1,$2,$3,$4)
+     on conflict(cid_hash) do update set
+       failed_attempts=excluded.failed_attempts,
+       locked_until=excluded.locked_until,
+       updated_at=excluded.updated_at`,
+    [cidHash, attempts, lockedUntil, now],
+  );
+}
+
+export async function clearPinFailures(cidHash: string) {
+  const now = Date.now();
+  return q(
+    `insert into pin_lockouts(cid_hash, failed_attempts, locked_until, updated_at)
+     values($1,0,0,$2)
+     on conflict(cid_hash) do update set
+       failed_attempts=0,
+       locked_until=0,
+       updated_at=excluded.updated_at`,
+    [cidHash, now],
+  );
 }
 
 export function adminLeaves() {

@@ -17,7 +17,12 @@ import {
   Plus,
   LoaderCircle,
 } from "lucide-react";
-import { TreeCanvas } from "@/features/display/tree-canvas";
+import dynamic from "next/dynamic";
+import type { TreeCanvasProps } from "@/features/display/tree-canvas";
+const TreeCanvas = dynamic<TreeCanvasProps>(
+  () => import("@/features/display/tree-canvas").then((mod) => mod.TreeCanvas),
+  { ssr: false },
+);
 import type { SceneController } from "@/features/display/tree-scene";
 import { TreeControls } from "./tree-controls";
 import {

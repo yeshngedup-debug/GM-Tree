@@ -1,23 +1,23 @@
-"use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Sprout, ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/"
       aria-label="GM Tree home"
-      className="inline-flex items-center gap-2 sm:gap-3"
+      className="inline-flex items-center gap-2.5"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-accent sm:h-10 sm:w-10">
-        <Sprout size={22} strokeWidth={1.6} />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+        <Sprout size={19} strokeWidth={2} />
       </span>
-      <span>
-        <span className="block whitespace-nowrap text-[15px] font-semibold leading-none tracking-tight sm:text-xl">
+      <span className="min-w-0">
+        <span className="block whitespace-nowrap text-[15px] font-semibold leading-none tracking-tight">
           GM Tree
         </span>
         {!compact && (
-          <span className="mt-1.5 block whitespace-nowrap text-[6px] tracking-[.18em] opacity-55 sm:text-[8px]">
+          <span className="mt-1 block whitespace-nowrap text-[10px] leading-none text-foreground">
             Gelephu Mindfulness Tree
           </span>
         )}
@@ -25,48 +25,139 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     </Link>
   );
 }
-export function SiteHeader() {
-  const pathname = usePathname();
+
+const navLinks = [
+  { href: "/", label: "The experience" },
+  { href: "/chambers", label: "Four chambers" },
+  { href: "/display", label: "Live tree" },
+];
+
+export function SiteHeader({ pathname = "/" }: { pathname?: string }) {
   return (
-    <header className="site-header mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 md:flex-nowrap md:px-10">
-      <Brand />
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 md:px-6">
+        <Brand />
+        <nav
+          aria-label="Main navigation (desktop)"
+          className="hidden items-center gap-1 md:flex"
+        >
+          {navLinks.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={pathname === href ? "page" : undefined}
+              className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+                pathname === href
+                  ? "bg-muted font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/privacy"
+            className="hidden rounded-lg px-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground lg:block"
+          >
+            Privacy
+          </Link>
+          <Button asChild size="sm">
+            <Link href="/join">
+              Add a hope <ArrowUpRight size={14} />
+            </Link>
+          </Button>
+        </div>
+      </div>
       <nav
-        aria-label="Main navigation"
-        className="order-last mt-2 flex w-full items-center justify-center gap-1 rounded-full bg-primary p-1.5 text-[10px] text-primary-foreground md:order-none md:mt-0 md:w-auto md:text-xs"
+        aria-label="Main navigation (mobile)"
+        className="flex items-center gap-1 overflow-x-auto border-t border-border/70 px-2 py-2 md:hidden"
       >
-        {[
-          ["/", "The experience"],
-          ["/chambers", "Four chambers"],
-          ["/display", "Live tree"],
-        ].map(([href, label]) => (
+        {navLinks.map(({ href, label }) => (
           <Link
             key={href}
             href={href}
             aria-current={pathname === href ? "page" : undefined}
-            className={`flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full px-2.5 py-2 md:px-5 md:py-3 ${pathname === href ? "bg-card text-foreground" : "hover:bg-white/10"}`}
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs transition-colors ${
+              pathname === href
+                ? "bg-muted font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
             {label}
-            {href === "/display" && <ArrowUpRight size={14} />}
           </Link>
         ))}
       </nav>
-      <Link
-        href="/join"
-        className="flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-card px-4 text-xs font-medium sm:px-5"
-      >
-        Add a hope <ArrowUpRight size={15} />
-      </Link>
     </header>
   );
 }
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: [string, string][];
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-foreground">{title}</p>
+      <ul className="mt-4 space-y-2.5">
+        {links.map(([href, label]) => (
+          <li key={href}>
+            <Link
+              href={href}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function SiteFooter() {
   return (
-    <footer className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-6 py-8 text-[11px] text-foreground/55 md:px-10">
-      <span>Rooted in values. Growing through people.</span>
-      <div className="flex flex-wrap gap-x-5 gap-y-3">
-        <Link href="/privacy">Participation & privacy</Link>
-        <Link href="/admin">Staff console</Link>
-        <span>Gelephu experience centre · Hackathon</span>
+    <footer className="mt-8 border-t border-border bg-card">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-[1.6fr_1fr_1fr_1fr] md:px-6">
+        <div>
+          <Brand />
+          <p className="mt-5 max-w-xs text-sm leading-6 text-muted-foreground">
+            Rooted in values. Growing through people. A living canopy of the
+            hopes people carry for Gelephu Mindfulness City.
+          </p>
+        </div>
+        <FooterColumn
+          title="Experience"
+          links={[
+            ["/", "The experience"],
+            ["/chambers", "Four chambers"],
+            ["/display", "Live tree"],
+          ]}
+        />
+        <FooterColumn
+          title="Take part"
+          links={[
+            ["/join", "Add a hope"],
+            ["/privacy", "Participation & privacy"],
+          ]}
+        />
+        <FooterColumn
+          title="Console"
+          links={[
+            ["/admin", "Staff console"],
+            ["/tree", "Tree studio"],
+          ]}
+        />
+      </div>
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground md:px-6">
+          <span>Gelephu Mindfulness Tree</span>
+          <span>A hackathon prototype · Gelephu experience centre</span>
+        </div>
       </div>
     </footer>
   );

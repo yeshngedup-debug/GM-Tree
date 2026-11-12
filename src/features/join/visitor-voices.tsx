@@ -45,7 +45,7 @@ export function VisitorVoices() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl tracking-tight">Your previous voices</h1>
-        <p className="mt-2 text-sm leading-6 text-foreground/60">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           A private place for the hopes you’ve shared and the replies you
           received.
         </p>
@@ -62,7 +62,7 @@ export function VisitorVoices() {
       ) : (
         <>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-foreground/60">
+            <span className="text-xs text-muted-foreground">
               {history.total} saved {history.total === 1 ? "voice" : "voices"}
             </span>
             <Button
@@ -82,7 +82,7 @@ export function VisitorVoices() {
           )}
           {history.voices.map((voice) => (
             <article key={voice.id} className="rounded-2xl bg-card p-5 sm:p-6 border border-border">
-              <p className="text-[10px] text-foreground/55">
+              <p className="text-[10px] text-muted-foreground">
                 {new Date(voice.created_at).toLocaleDateString("en-GB", {
                   timeZone: "Asia/Thimphu",
                   year: "numeric",
@@ -101,7 +101,7 @@ export function VisitorVoices() {
                   <p className="mt-2 text-sm leading-6">{voice.reply}</p>
                 </div>
               )}
-              <p className="mt-4 text-[10px] leading-5 text-foreground/60">
+              <p className="mt-4 text-[10px] leading-5 text-muted-foreground">
                 Your leaf: “{voice.leaf_message}”
               </p>
               {voice.status === "approved" ? (
@@ -112,7 +112,7 @@ export function VisitorVoices() {
                   Open public keepsake
                 </Link>
               ) : (
-                <p className="mt-3 text-xs text-foreground/55">
+                <p className="mt-3 text-xs text-muted-foreground">
                   This leaf is no longer on the public tree.
                 </p>
               )}
@@ -131,7 +131,7 @@ export function VisitorVoices() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-foreground/60 shrink-0">
+              <span className="text-sm text-muted-foreground shrink-0">
                 {page} / {history.pages}
               </span>
               <Button
@@ -148,7 +148,7 @@ export function VisitorVoices() {
             <summary className="cursor-pointer text-sm">
               Manage my visit profile
             </summary>
-            <p className="mt-3 text-sm leading-6 text-foreground/60">
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Removing your profile deletes its CID lookup, PIN and history
               links and signs out every device. Anonymous leaves and staff
               submission records remain. This action cannot be undone.

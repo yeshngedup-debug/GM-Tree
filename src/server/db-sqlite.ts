@@ -1,13 +1,59 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomBytes } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 const path = process.env.DATABASE_PATH ?? "data/living-tree.sqlite";
 let sqliteDatabase: DatabaseSync | null = null;
 
+const BUSY_RETRIES = 12;
+function isBusy(error: unknown) {
+  const code = (error as { errcode?: number } | null)?.errcode;
+  if (code === 5 || code === 6) return true; // SQLITE_BUSY, SQLITE_LOCKED
+  return /database (?:table )?is locked|\bbusy\b/i.test(
+    error instanceof Error ? error.message : String(error),
+  );
+}
+function sleepSync(ms: number) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+// `next build` collects page data in parallel workers and every worker opens
+// this file, so concurrent schema creation used to fail with SQLITE_BUSY
+// ("database is locked"). WAL plus a busy timeout lets the workers queue, and
+// the retry covers the window where switching the journal mode needs
+// exclusivity.
+function withBusyRetry<T>(operation: () => T): T {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return operation();
+    } catch (error) {
+      if (attempt >= BUSY_RETRIES || !isBusy(error)) throw error;
+      sleepSync(20 * (attempt + 1));
+    }
+  }
+}
+function openDatabase(file: string) {
+  if (file !== ":memory:") mkdirSync(dirname(file), { recursive: true });
+  const database = new DatabaseSync(file);
+  database.exec("pragma busy_timeout = 10000");
+  try {
+    database.exec("pragma journal_mode = wal");
+  } catch (error) {
+    if (!isBusy(error)) throw error;
+  }
+  database.exec("pragma synchronous = normal");
+  return database;
+}
 function getDb(): DatabaseSync {
   if (!sqliteDatabase) {
-    sqliteDatabase = new DatabaseSync(path);
-    initSchema(sqliteDatabase);
+    const database = openDatabase(path);
+    try {
+      withBusyRetry(() => initSchema(database));
+    } catch (error) {
+      database.close();
+      throw error;
+    }
+    sqliteDatabase = database;
   }
   return sqliteDatabase;
 }
@@ -85,6 +131,12 @@ function initSchema(database: DatabaseSync) {
       token_hash text primary key,
       profile_id text not null,
       expires bigint not null
+    );
+    create table if not exists pin_lockouts (
+      cid_hash text primary key,
+      failed_attempts integer not null default 0,
+      locked_until bigint not null default 0,
+      updated_at bigint not null default 0
     );
   `);
   database.exec(

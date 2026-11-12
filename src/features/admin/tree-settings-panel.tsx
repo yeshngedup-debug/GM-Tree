@@ -8,9 +8,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import type { TreeCanvasProps } from "@/features/display/tree-canvas";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { TreeCanvas } from "@/features/display/tree-canvas";
+const TreeCanvas = dynamic<TreeCanvasProps>(
+  () => import("@/features/display/tree-canvas").then((mod) => mod.TreeCanvas),
+  { ssr: false },
+);
 import { defaultTreeSettings, type TreeSettings } from "@/lib/tree-settings";
 import type { Leaf } from "@/lib/catalog";
 import { api } from "@/lib/client";
@@ -75,10 +80,10 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
       className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]"
     >
       <Card>
-        <h2 id="tree-settings-title" className="mb-2 text-3xl">
+        <h2 id="tree-settings-title" className="mb-2 text-2xl">
           Shape the living tree
         </h2>
-        <p className="mb-7 text-sm text-foreground/60">
+        <p className="mb-7 text-sm text-muted-foreground">
           Preview a new appearance, then save to update the reception display.
         </p>
         <Button asChild variant="secondary" className="mb-6 w-full">
@@ -87,9 +92,9 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
           </Link>
         </Button>
         <fieldset disabled={!loaded || busy} className="space-y-6">
-          <section className="rounded-3xl bg-muted p-5">
-            <h3 className="text-2xl">Display title</h3>
-            <p className="mb-4 mt-2 text-xs leading-5 text-foreground/60">
+          <section className="rounded-xl border border-border bg-muted/60 p-5">
+            <h3 className="text-base font-semibold">Display title</h3>
+            <p className="mb-4 mt-2 text-xs leading-5 text-muted-foreground">
               Change the title shown above the reception tree. Connected
               displays update automatically.
             </p>
@@ -104,7 +109,7 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
               />
             </label>
             <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="text-[10px] text-foreground/55">
+              <span className="text-[10px] text-muted-foreground">
                 {settings.headline.length} / 90
               </span>
               <Button
@@ -198,7 +203,7 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
                   )
                 }
               />
-              <span className="block text-foreground/55">
+              <span className="block text-muted-foreground">
                 An empty tree starts as a bare sapling. Each approved hope grows
                 its branches.
               </span>
@@ -221,7 +226,7 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
               <label key={key} className="block space-y-3 text-xs">
                 <span className="flex justify-between">
                   <span>{label}</span>
-                  <span className="text-foreground/55">
+                  <span className="text-muted-foreground">
                     {key === "rotation"
                       ? `${settings[key]} degrees`
                       : settings[key].toFixed(2)}
@@ -312,7 +317,7 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
               </option>
             </select>
           </label>
-          <label className="flex items-start gap-3 rounded-2xl bg-muted p-4 text-xs leading-relaxed">
+          <label className="flex items-start gap-3 rounded-xl border border-border bg-muted/60 p-4 text-xs leading-relaxed">
             <input
               type="checkbox"
               checked={settings.acceptingContributions}
@@ -350,13 +355,13 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
             </Button>
           </div>
         </fieldset>
-        <p role="status" className="mt-4 text-xs leading-relaxed">
+        <p role="status" className="mt-4 text-xs leading-relaxed text-muted-foreground">
           {notice}
         </p>
       </Card>
       <aside className="space-y-5">
-        <div className="forest overflow-hidden rounded-3xl p-4">
-          <p className="eyebrow p-3 text-center text-accent">
+        <div className="forest overflow-hidden rounded-2xl border border-border p-4">
+          <p className="eyebrow p-3 text-center text-primary">
             Appearance preview
           </p>
           <TreeCanvas
@@ -368,13 +373,13 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
             settings={preview}
             className="admin-tree-preview"
           />
-          <p className="mb-4 text-center text-[10px] text-white/55">
+          <p className="mb-4 text-center text-[10px] text-muted-foreground">
             A preview only until you save.
           </p>
         </div>
         <Card>
-          <h3 className="mb-3 text-2xl">Display-ready layout</h3>
-          <p className="text-xs leading-relaxed text-foreground/65">
+          <h3 className="mb-3 text-base font-semibold">Display-ready layout</h3>
+          <p className="text-xs leading-relaxed text-muted-foreground">
             The display fills the viewport in portrait or landscape, reframes
             the whole tree, and keeps the scan code clear of the canopy. Set the
             screen to portrait in its display settings and enter browser
@@ -385,7 +390,7 @@ export function TreeSettingsPanel({ leaves }: { leaves: Leaf[] }) {
               Open reception display <ExternalLink size={14} />
             </Link>
           </Button>
-          <p className="mt-4 text-[10px] text-foreground/50">
+          <p className="mt-4 text-[10px] text-muted-foreground">
             Procedural branches adapted from Mike Fernandez's just-a-simple-tree
             (MIT). Visitor leaves remain linked to your local database.
           </p>

@@ -12,6 +12,7 @@ import {
   errorResponse,
   AppError,
   noStore,
+  ipFromRequest,
 } from "@/server/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,9 @@ export function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
+    // Per-IP rate limit on sign-in attempts (in addition to the global admin:login limit).
+    const ip = ipFromRequest(request);
+    await consumeRate(`admin:login:${ip}`, 5, 600000);
     if (!process.env.ADMIN_PASSWORD)
       throw new AppError(
         "Run npm run setup and restart the server to enable staff sign-in.",

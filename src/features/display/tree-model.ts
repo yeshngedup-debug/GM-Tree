@@ -1,4 +1,27 @@
-import * as THREE from "three";
+import {
+  CanvasTexture,
+  SRGBColorSpace,
+  DataTexture,
+  RGBAFormat,
+  NearestFilter,
+  MeshToonMaterial,
+  Mesh,
+  MeshDepthMaterial,
+  RGBADepthPacking,
+  Vector3,
+  PlaneGeometry,
+  DoubleSide,
+  Color,
+  InstancedMesh,
+  DynamicDrawUsage,
+  Box3,
+  Object3D,
+  Group,
+  BufferAttribute,
+  Euler,
+  Quaternion,
+  MathUtils,
+} from "three";
 import { generateTree } from "@/vendor/just-a-simple-tree";
 import { createClusterTexture } from "@/vendor/just-a-simple-tree/leaf-textures.js";
 import { treeGrowth, smoothGrowth } from "@/lib/tree-growth";
@@ -23,8 +46,8 @@ export type GrowthMetrics = {
   arriving: number;
 };
 type Anchor = {
-  center: THREE.Vector3;
-  root: THREE.Vector3;
+  center: Vector3;
+  root: Vector3;
   birth: number;
   lift?: number;
   flex?: number;
@@ -34,10 +57,10 @@ type Card = {
   id?: string;
   leaf?: Leaf;
   anchor: Anchor;
-  offset: THREE.Vector3;
-  rotation: THREE.Euler;
+  offset: Vector3;
+  rotation: Euler;
   size: number;
-  color: THREE.Color;
+  color: Color;
   arrival: number;
 };
 
@@ -96,36 +119,36 @@ export function makeLeafTexture(shape: TreeSettings["leafShape"]) {
     }
   }
   ctx.restore();
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
   return texture;
 }
 
 export function createTreeModel(settings: TreeSettings, low: boolean) {
   const { geometry, clumps } = generateTree(settings),
-    group = new THREE.Group(),
+    group = new Group(),
     windField = createTreeWind(settings);
-  group.rotation.y = THREE.MathUtils.degToRad(settings.rotation);
+  group.rotation.y = MathUtils.degToRad(settings.rotation);
   const palette = treePalettes[settings.palette],
     colors = settings.customColors
       ? [settings.leafShadow, settings.leafMid, settings.leafLight]
       : palette.leaves;
-  const gradient = new THREE.DataTexture(
+  const gradient = new DataTexture(
     new Uint8Array([
       60, 60, 60, 255, 150, 150, 150, 255, 220, 220, 220, 255, 255, 255, 255,
       255,
     ]),
     4,
     1,
-    THREE.RGBAFormat,
+    RGBAFormat,
   );
-  gradient.minFilter = gradient.magFilter = THREE.NearestFilter;
+  gradient.minFilter = gradient.magFilter = NearestFilter;
   gradient.needsUpdate = true;
   const texture =
       settings.growthMode === "manual"
         ? createClusterTexture(settings.leafShape, settings.species)
         : makeLeafTexture(settings.leafShape),
-    woodMaterial = new THREE.MeshToonMaterial({
+    woodMaterial = new MeshToonMaterial({
       color: settings.customColors ? settings.woodColor : palette.wood,
       gradientMap: gradient,
     });
@@ -136,10 +159,10 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
   const centers = geometry.getAttribute("growCenter"),
     roots = geometry.getAttribute("growRoot"),
     births = geometry.getAttribute("birth");
-  const wood = new THREE.Mesh(geometry, woodMaterial);
+  const wood = new Mesh(geometry, woodMaterial);
   wood.castShadow = wood.receiveShadow = true;
-  const woodDepth = new THREE.MeshDepthMaterial({
-    depthPacking: THREE.RGBADepthPacking,
+  const woodDepth = new MeshDepthMaterial({
+    depthPacking: RGBADepthPacking,
   });
   windField.apply(woodMaterial);
   windField.apply(woodDepth);
@@ -153,14 +176,14 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
     seen = new Set<string>();
   if (centers && births)
     for (let i = 0; i < centers.count; i++) {
-      const center = new THREE.Vector3().fromBufferAttribute(centers, i),
+      const center = new Vector3().fromBufferAttribute(centers, i),
         birth = births.getX(i),
         key = `${center.x.toFixed(3)}:${center.y.toFixed(3)}:${center.z.toFixed(3)}`;
       if (!seen.has(key)) {
         seen.add(key);
         anchors.push({
           center,
-          root: new THREE.Vector3().fromBufferAttribute(roots, i),
+          root: new Vector3().fromBufferAttribute(roots, i),
           birth,
           lift: swayLifts?.getX(i) || 0,
           flex: swayDetails?.getX(i) || 0,
@@ -172,13 +195,13 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
     for (const clump of clumps)
       anchors.push({
         center: clump.position,
-        root: new THREE.Vector3(),
+        root: new Vector3(),
         birth: clump.birth || 0,
       });
   if (!anchors.length)
     anchors.push({
-      center: new THREE.Vector3(0, settings.size * 0.25, 0),
-      root: new THREE.Vector3(),
+      center: new Vector3(0, settings.size * 0.25, 0),
+      root: new Vector3(),
       birth: 0,
     });
   const clumpAnchors = clumps.map((clump) =>
@@ -192,16 +215,16 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
     ),
   );
   const capacity = low ? 2400 : 6000,
-    leafGeometry = new THREE.PlaneGeometry(
+    leafGeometry = new PlaneGeometry(
       1,
       1,
       settings.growthMode === "manual" ? 1 : 4,
       settings.growthMode === "manual" ? 1 : 5,
     ),
-    leafMaterial = new THREE.MeshToonMaterial({
+    leafMaterial = new MeshToonMaterial({
       map: texture,
       gradientMap: gradient,
-      side: THREE.DoubleSide,
+      side: DoubleSide,
       alphaTest: 0.4,
       alphaToCoverage: true,
       color: "white",
@@ -209,9 +232,9 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
   // Upstream applies a color ramp after lighting instead of multiplying the
   // leaf color by the sun again. Preserve those bands and the fine leaf edges.
   leafMaterial.onBeforeCompile = (shader) => {
-    shader.uniforms.uLeafShadow = { value: new THREE.Color(colors[0]) };
-    shader.uniforms.uLeafMid = { value: new THREE.Color(colors[1]) };
-    shader.uniforms.uLeafLight = { value: new THREE.Color(colors[2]) };
+    shader.uniforms.uLeafShadow = { value: new Color(colors[0]) };
+    shader.uniforms.uLeafMid = { value: new Color(colors[1]) };
+    shader.uniforms.uLeafLight = { value: new Color(colors[2]) };
     shader.uniforms.uCanopyPreview = {
       value: settings.growthMode === "manual" ? 1 : 0,
     };
@@ -246,28 +269,28 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
     }
     leafGeometry.computeVertexNormals();
   }
-  const foliage = new THREE.InstancedMesh(leafGeometry, leafMaterial, capacity);
+  const foliage = new InstancedMesh(leafGeometry, leafMaterial, capacity);
   foliage.castShadow = foliage.receiveShadow = true;
   foliage.count = 0;
-  foliage.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  foliage.instanceMatrix.setUsage(DynamicDrawUsage);
   foliage.frustumCulled = false;
   foliage.name = "GMC contribution leaves";
   group.add(foliage);
-  const bounds = new THREE.Box3();
+  const bounds = new Box3();
   if (positions?.count)
-    bounds.setFromBufferAttribute(positions as THREE.BufferAttribute);
+    bounds.setFromBufferAttribute(positions as BufferAttribute);
   for (const clump of clumps) {
     bounds.expandByPoint(clump.position.clone().addScalar(clump.radius * 1.2));
     bounds.expandByPoint(clump.position.clone().addScalar(-clump.radius * 1.2));
   }
   if (bounds.isEmpty())
     bounds.set(
-      new THREE.Vector3(-1, 0, -1),
-      new THREE.Vector3(1, settings.size, 1),
+      new Vector3(-1, 0, -1),
+      new Vector3(1, settings.size, 1),
     );
   const matureHeight = Math.max(bounds.max.y, 1),
-    dummy = new THREE.Object3D(),
-    known = new Map<string, THREE.Vector3>();
+    dummy = new Object3D(),
+    known = new Map<string, Vector3>();
   windField.configure(settings, matureHeight);
   let target = treeGrowth(0, settings),
     progress = target.progress,
@@ -355,7 +378,7 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
           card.arrival =
             launchedAt + Math.max(0, freshArrivals.indexOf(leaf.id)) * 80;
         currentCards.push(card);
-        if (leaf) known.set(leaf.id, new THREE.Vector3());
+        if (leaf) known.set(leaf.id, new Vector3());
         continue;
       }
       // A leaf keeps the branch it could reach when it arrived. Growing tips
@@ -370,7 +393,7 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
         ),
         pool = eligible.length ? eligible : anchors;
       let anchor = pool[seed % pool.length],
-        offset = new THREE.Vector3((seeded(seed) - 0.5) * 0.08, 0.015, 0.045);
+        offset = new Vector3((seeded(seed) - 0.5) * 0.08, 0.015, 0.045);
       let size = (0.28 + seeded(seed + 3) * 0.13) * settings.leafSize;
       if (settings.growthMode === "manual" && clumps.length) {
         const clump = clumps[i % clumps.length],
@@ -383,15 +406,15 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
           root: clumpAnchors[i % clumps.length].root,
           birth: clumpAnchors[i % clumps.length].birth,
         };
-        offset = new THREE.Vector3(
+        offset = new Vector3(
           Math.cos(angle) * r,
           y * clump.radius * (clump.flatten || 1),
           Math.sin(angle) * r,
         );
         size = clump.radius * 0.9 * settings.leafSize;
       }
-      const seasonal = new THREE.Color(colors[1]).lerp(
-        new THREE.Color(settings.palette === "frost" ? "#dce8df" : "#b67735"),
+      const seasonal = new Color(colors[1]).lerp(
+        new Color(settings.palette === "frost" ? "#dce8df" : "#b67735"),
         Math.max(0, settings.season - 0.45),
       );
       const card: Card = {
@@ -399,7 +422,7 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
         leaf,
         anchor,
         offset,
-        rotation: new THREE.Euler(
+        rotation: new Euler(
           (seeded(seed + 5) - 0.5) * 1.1,
           (seeded(seed + 6) - 0.5) * 1.8,
           (seeded(seed + 7) - 0.5) * 1.4,
@@ -409,11 +432,11 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
           leaf &&
           !settings.customColors &&
           settings.growthMode === "contributions"
-            ? new THREE.Color(
+            ? new Color(
                 themes.find((theme) => theme.id === leaf.category)!.color,
               )
             : seasonal.lerp(
-                new THREE.Color(colors[seed % colors.length]),
+                new Color(colors[seed % colors.length]),
                 0.15,
               ),
         arrival: previous.get(leaf?.id)?.arrival || 0,
@@ -422,8 +445,8 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
         const normal = offset.clone().normalize();
         if (normal.lengthSq() > 0.01)
           card.rotation.setFromQuaternion(
-            new THREE.Quaternion().setFromUnitVectors(
-              new THREE.Vector3(0, 0, 1),
+            new Quaternion().setFromUnitVectors(
+              new Vector3(0, 0, 1),
               normal,
             ),
           );
@@ -438,7 +461,7 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
         card.arrival =
           launchedAt + Math.max(0, freshArrivals.indexOf(leaf.id)) * 80;
       currentCards.push(card);
-      if (leaf) known.set(leaf.id, new THREE.Vector3());
+      if (leaf) known.set(leaf.id, new Vector3());
     }
     lastArrivals = arrivals;
     foliage.count = total;
@@ -457,10 +480,10 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
       Math.abs(scale - target.scale) > 0.0001;
     progress = reduced
       ? target.progress
-      : THREE.MathUtils.damp(progress, target.progress, 4, delta);
+      : MathUtils.damp(progress, target.progress, 4, delta);
     scale = reduced
       ? target.scale
-      : THREE.MathUtils.damp(scale, target.scale, 4, delta);
+      : MathUtils.damp(scale, target.scale, 4, delta);
     const arrivalCount = reduced
         ? 0
         : currentCards.reduce(
@@ -515,11 +538,11 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
       let pop = 1,
         turn = 0;
       if (!reduced && card.arrival && now - card.arrival < 2000) {
-        const t = THREE.MathUtils.clamp((now - card.arrival) / 2000, 0, 1),
+        const t = MathUtils.clamp((now - card.arrival) / 2000, 0, 1),
           ease = t * t * (3 - 2 * t),
           seed = hashLeaf(card.id || String(i)),
           end = dummy.position.clone(),
-          start = new THREE.Vector3(
+          start = new Vector3(
             (seeded(seed + 21) - 0.5) * matureHeight * 1.3,
             matureHeight * 0.04,
             matureHeight * 0.55,
@@ -527,7 +550,7 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
           control = end
             .clone()
             .add(
-              new THREE.Vector3(
+              new Vector3(
                 (seeded(seed + 22) - 0.5) * matureHeight * 0.85,
                 matureHeight * 0.35,
                 matureHeight * 0.3,
@@ -621,6 +644,6 @@ export function createTreeModel(settings: TreeSettings, low: boolean) {
       dirty = true;
     },
     windOffset: () =>
-      windField.sample(new THREE.Vector3(0, matureHeight, 0)).clone(),
+      windField.sample(new Vector3(0, matureHeight, 0)).clone(),
   };
 }

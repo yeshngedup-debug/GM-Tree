@@ -37,12 +37,12 @@ export default async function JoinPage({
       </main>
       <footer className="border-t border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-area-bottom">
         <div className="mx-auto w-full flex items-center justify-between gap-4 px-4 py-6 sm:px-6 sm:py-8">
-          <span className="text-[10px] text-foreground/45">
+          <span className="text-[10px] text-muted-foreground">
             A moment for a shared future.
           </span>
           <Link
             href="/privacy"
-            className="text-[10px] text-foreground/45 underline underline-offset-4"
+            className="text-[10px] text-muted-foreground underline underline-offset-4"
           >
             Participation &amp; privacy
           </Link>

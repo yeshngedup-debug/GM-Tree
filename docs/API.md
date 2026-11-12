@@ -71,7 +71,7 @@ The display drains new leaves in overlapping batches of up to eight every 350ms.
 
 ## GET /api/health
 
-`{status:"ok",database:"sqlite",ai:"offline"|"openai",serverTime}`. AI indicates configuration, not provider reachability. Returns 503 if database checks fail.
+`{status:"ok",database:"sqlite"|"postgres",ai:"offline"|"openai",serverTime}`. AI indicates configuration, not provider reachability. Returns 503 if database checks fail.
 
 ## Staff session
 

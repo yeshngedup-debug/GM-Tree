@@ -47,7 +47,10 @@ test("OpenAI structured response is moderated, persisted and shared by concurren
   ).toBe(1);
   const last = (await (await fetch("http://127.0.0.1:3102/counts")).json())
     .lastGeneration;
-  expect(last).toEqual({ model: "gpt-6-luna", reasoning: { effort: "none" } });
+  expect(last).toEqual({
+    model: "gpt-6-luna",
+    reasoning_effort: "none",
+  });
   await client.dispose();
 });
 for (const scenario of [

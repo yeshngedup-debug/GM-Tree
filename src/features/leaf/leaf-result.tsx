@@ -95,7 +95,7 @@ export function LeafResult({
           </span>
           <div>
             <h1 className="text-2xl">Your leaf is growing.</h1>
-            <p className="mt-1 text-[10px] text-foreground/55">
+            <p className="mt-1 text-[10px] text-muted-foreground">
               Look for leaf #{leaf.id.slice(0, 6)} on the big screen.
             </p>
           </div>
@@ -106,7 +106,7 @@ export function LeafResult({
               <span className="flex items-center gap-2 text-xs font-medium">
                 <MessageCircle size={15} />A little reflection for you
               </span>
-              <span className="text-[9px] text-foreground/45">
+              <span className="text-[9px] text-muted-foreground">
                 {replyMode === "openai" ? "OpenAI reply" : "Offline reply"}
               </span>
             </div>
@@ -115,7 +115,7 @@ export function LeafResult({
             </p>
             <aside className="gmc-fact">
               <p className="text-xs font-medium">A little about Gelephu</p>
-              <p className="mt-1 text-xs leading-5 text-foreground/65">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {gmcFacts[leaf.category].text}
               </p>
               <a
@@ -128,12 +128,12 @@ export function LeafResult({
               </a>
             </aside>
             {original && (
-              <details className="mt-3 text-xs text-foreground/55">
+              <details className="mt-3 text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Your original note</summary>
                 <p className="mt-2 leading-5">{original}</p>
               </details>
             )}
-            <p className="mt-3 text-[9px] text-foreground/45">
+            <p className="mt-3 text-[9px] text-muted-foreground">
               This reply is not shown on the public tree.
             </p>
           </section>
@@ -186,7 +186,7 @@ export function LeafResult({
         {notice && (
           <p
             role="status"
-            className="break-all text-center text-[10px] text-foreground/60"
+            className="break-all text-center text-[10px] text-muted-foreground"
           >
             {notice}
           </p>
@@ -199,7 +199,7 @@ export function LeafResult({
         <span className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-accent/50">
           <Check size={21} />
         </span>
-        <p className="eyebrow mb-3 text-foreground/45">
+        <p className="eyebrow mb-3 text-muted-foreground">
           {keepsake
             ? "A hope to carry with you"
             : "Your voice is part of the canopy"}
@@ -207,7 +207,7 @@ export function LeafResult({
         <h1 className="text-4xl tracking-tight">
           {keepsake ? "One leaf. A shared future." : "Your leaf is growing."}
         </h1>
-        <p className="mt-3 text-sm text-foreground/60">
+        <p className="mt-3 text-sm text-muted-foreground">
           {keepsake
             ? "A little keepsake from the GM Tree."
             : `Look for leaf #${leaf.id.slice(0, 6)} on the big screen. You've helped the tree grow.`}
@@ -265,7 +265,7 @@ export function LeafResult({
       </div>
       <p
         role="status"
-        className="break-all text-center text-xs text-foreground/60"
+        className="break-all text-center text-xs text-muted-foreground"
       >
         {notice}
       </p>
@@ -274,7 +274,7 @@ export function LeafResult({
         reason={leaf.chamber_reason}
         expanded
       />
-      <p className="text-center text-[10px] leading-relaxed text-foreground/50">
+      <p className="text-center text-[10px] leading-relaxed text-muted-foreground">
         {leaf.mode === "offline"
           ? "Your leaf uses a curated offline response inspired by your theme and keywords."
           : "Your leaf was interpreted with OpenAI and checked before publication."}{" "}

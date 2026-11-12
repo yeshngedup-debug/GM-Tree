@@ -15,6 +15,7 @@ import {
   noStore,
   readJson,
   requireSameOrigin,
+  verifyCsrfToken,
 } from "@/server/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +64,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
+    const session = visitor(request);
+    verifyCsrfToken(request, session.id);
     const parsed = credentials.safeParse(await readJson(request));
     if (!parsed.success)
       throw new AppError(
@@ -76,10 +79,12 @@ export async function POST(request: Request) {
       throw new AppError(
         "Choose to remember this voice before connecting your CID.",
       );
-    const session = await unlockVisitorHistory(request, input);
+    const unlockedSession = await unlockVisitorHistory(request, input);
     const headers = new Headers(noStore);
-    session.cookies.forEach((value) => headers.append("Set-Cookie", value));
-    return Response.json(await visitorHistory(session.profile), {
+    unlockedSession.cookies.forEach((value: string) =>
+      headers.append("Set-Cookie", value),
+    );
+    return Response.json(await visitorHistory(unlockedSession.profile), {
       headers,
     });
   } catch (error) {
@@ -89,6 +94,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     requireSameOrigin(request);
+    const session = visitor(request);
+    verifyCsrfToken(request, session.id);
     const forget = new URL(request.url).searchParams.get("forget") === "true";
     const headers = new Headers(noStore);
     headers.append("Set-Cookie", await endVisitorSession(request, forget));
@@ -100,6 +107,8 @@ export async function DELETE(request: Request) {
 export async function PATCH(request: Request) {
   try {
     requireSameOrigin(request);
+    const session = visitor(request);
+    verifyCsrfToken(request, session.id);
     const profile = await currentVisitorProfile(request);
     if (!profile)
       throw new AppError("Unlock your history first.", 401, "HISTORY_LOCKED");
