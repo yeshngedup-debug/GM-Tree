@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { HydrationCompatibility } from "@/components/hydration-compat";
 import { generateCsrfToken } from "@/server/http";
+import { Analytics } from "@vercel/analytics/next";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default async function RootLayout({
           Skip to main content
         </a>
         {children}
+        <Analytics />
       </body>
     </html>
   );
