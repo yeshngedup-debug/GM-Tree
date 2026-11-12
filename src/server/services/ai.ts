@@ -50,7 +50,7 @@ function generationOptions() {
     ...(model === "gpt-6-luna" ? { reasoning_effort: "none" } : {}),
   };
 }
-function providerBase() {
+export function providerBase() {
   return (
     process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
   ).replace(/\/$/, "");
